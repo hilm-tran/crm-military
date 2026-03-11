@@ -40,9 +40,7 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
-          <div className="w-full h-full flex items-center justify-center">
-            {children}
-          </div>
+          <div className="w-full h-full">{children}</div>
         </Providers>
       </body>
     </html>
