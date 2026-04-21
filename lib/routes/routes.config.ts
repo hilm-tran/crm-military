@@ -35,6 +35,42 @@ export const routes = {
     pattern: "/soldiers",
     private: true,
   },
+  "/scan": {
+    router: "/scan",
+    filePath: "(private)/scan",
+    pattern: "/scan",
+    private: true,
+  },
+  "/regions": {
+    router: "/regions",
+    filePath: "(private)/regions",
+    pattern: "/regions",
+    private: true,
+  },
+  "/units": {
+    router: "/units",
+    filePath: "(private)/units",
+    pattern: "/units",
+    private: true,
+  },
+  "/submission-groups": {
+    router: "/submission-groups",
+    filePath: "(private)/submission-groups",
+    pattern: "/submission-groups",
+    private: true,
+  },
+  "/submission-flows": {
+    router: "/submission-flows",
+    filePath: "(private)/submission-flows",
+    pattern: "/submission-flows",
+    private: true,
+  },
+  "/leave-approval-configs": {
+    router: "/leave-approval-configs",
+    filePath: "(private)/leave-approval-configs",
+    pattern: "/leave-approval-configs",
+    private: true,
+  },
 } as const;
 
 // List of all route keys
@@ -45,6 +81,12 @@ export const routeKeys = [
   "/history",
   "/requests",
   "/soldiers",
+  "/scan",
+  "/regions",
+  "/units",
+  "/submission-groups",
+  "/submission-flows",
+  "/leave-approval-configs",
 ] as const;
 
 // List of all route patterns
@@ -55,4 +97,10 @@ export const routePatterns = [
   "/history",
   "/requests",
   "/soldiers",
+  "/scan",
+  "/regions",
+  "/units",
+  "/submission-groups",
+  "/submission-flows",
+  "/leave-approval-configs",
 ] as const;

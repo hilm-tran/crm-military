@@ -28,9 +28,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       setIsUploading(true);
       try {
         const result = await uploadImage(file);
-        // Assuming result is the path string or an object with a path property
-        const path =
-          typeof result === "string" ? result : result.data || result;
+        // API trả về { data: { filename, path, url }, status, message }
+        const path = (result as any)?.data?.path ?? (result as any)?.data ?? result;
         setPreview(URL.createObjectURL(file));
         onUploadSuccess(path);
       } catch (error) {

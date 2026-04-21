@@ -5,12 +5,14 @@ import { useCallback, useMemo } from "react";
 export interface Soldier {
   id: number;
   fullName: string;
-  rank: string;
-  unitName: string;
-  position: string;
+  regionCode: string | null;
+  rankCode: string | null;
+  unitCode: string | null;
+  positionCode: string | null;
   code: string;
-  qrCode: string;
-  imageUrl: string;
+  qrCode: string; // base64 PNG image
+  qrSource: string;
+  imageUrl: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -117,12 +119,37 @@ export const useSoldier = () => {
     [],
   );
 
+  const deleteSoldier = useCallback(async (id: number) => {
+    try {
+      const result = await apiClient.fetch(`/api/personnel/${id}`, {
+        method: "DELETE",
+      });
+
+      addToast({
+        title: "Thành công",
+        description: "Đã xóa quân nhân",
+        color: "success",
+      });
+
+      return result;
+    } catch (error: any) {
+      console.error("Delete Soldier Error:", error);
+      addToast({
+        title: "Lỗi",
+        description: error.message || "Không thể xóa quân nhân",
+        color: "danger",
+      });
+      throw error;
+    }
+  }, []);
+
   return useMemo(
     () => ({
       createSoldier,
       uploadImage,
       getSoldiers,
+      deleteSoldier,
     }),
-    [createSoldier, uploadImage, getSoldiers],
+    [createSoldier, uploadImage, getSoldiers, deleteSoldier],
   );
 };
