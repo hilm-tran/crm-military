@@ -15,7 +15,7 @@ export const useCombobox = () => {
   const getRanks = useCallback(async (): Promise<Rank[]> => {
     try {
       const result = await apiClient.get<Rank[]>("/api/common/combobox/ranks");
-      return result.data || [];
+      return (result as any)?.data ?? [];
     } catch (error: any) {
       console.error("Get Ranks Error:", error);
       return [];
@@ -27,7 +27,7 @@ export const useCombobox = () => {
       const result = await apiClient.get<Position[]>(
         "/api/common/combobox/positions",
       );
-      return result.data || [];
+      return (result as any)?.data ?? [];
     } catch (error: any) {
       console.error("Get Positions Error:", error);
       return [];
@@ -39,7 +39,7 @@ export const useCombobox = () => {
       const result = await apiClient.get<Region[]>(
         "/api/common/combobox/regions",
       );
-      return result.data || [];
+      return (result as any)?.data ?? [];
     } catch (error: any) {
       console.error("Get Regions Error:", error);
       return [];
@@ -54,7 +54,7 @@ export const useCombobox = () => {
       const result = await apiClient.get<Unit[]>(
         `/api/common/combobox/units${query}`,
       );
-      return result.data || [];
+      return (result as any)?.data ?? [];
     } catch (error: any) {
       console.error("Get Units Error:", error);
       return [];

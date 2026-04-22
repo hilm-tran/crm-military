@@ -1,7 +1,7 @@
 "use client";
 
 import { useDebounce } from "@/hooks/use-debounce";
-import { SubmissionFlow, SubmissionFlowStep, useSubmission } from "@/hooks/use-submission";
+import { SubmissionFlow, SubmissionFlowGroup, useSubmission } from "@/hooks/use-submission";
 import {
   Button,
   Chip,
@@ -50,8 +50,8 @@ function FlowFormModal({ isOpen, onOpenChange, editing, groups, onSuccess }: For
       setCode(editing?.code ?? "");
       setName(editing?.name ?? "");
       setSteps(
-        editing?.steps?.length
-          ? editing.steps.map((s) => ({ groupId: s.groupId }))
+        editing?.groups?.length
+          ? editing.groups.map((s) => ({ groupId: String(s.groupId) }))
           : [{ groupId: "" }],
       );
     }
@@ -63,7 +63,7 @@ function FlowFormModal({ isOpen, onOpenChange, editing, groups, onSuccess }: For
   const setStepGroup = (idx: number, groupId: string) =>
     setSteps((prev) => prev.map((s, i) => (i === idx ? { groupId } : s)));
 
-  const builtSteps: SubmissionFlowStep[] = steps.map((s, i) => ({
+  const builtGroups: SubmissionFlowGroup[] = steps.map((s, i) => ({
     orderNo: i + 1,
     groupId: s.groupId,
   }));
@@ -79,9 +79,9 @@ function FlowFormModal({ isOpen, onOpenChange, editing, groups, onSuccess }: For
     try {
       setIsSubmitting(true);
       if (editing) {
-        await updateFlow({ id: editing.id, code, name, steps: builtSteps });
+        await updateFlow({ id: editing.id, code, name, groups: builtGroups });
       } else {
-        await createFlow({ code, name, steps: builtSteps });
+        await createFlow({ code, name, groups: builtGroups });
       }
       onClose();
       onSuccess();
@@ -280,8 +280,8 @@ export default function SubmissionFlowsPage() {
   const openEdit = (f: SubmissionFlow) => { setEditing(f); formModal.onOpen(); };
   const openDelete = (f: SubmissionFlow) => { setDeleting(f); deleteModal.onOpen(); };
 
-  const getGroupName = (groupId: string) =>
-    groups.find((g) => g.id === groupId)?.name ?? groupId;
+  const getGroupName = (groupId: string | number) =>
+    groups.find((g) => g.id === String(groupId))?.name ?? String(groupId);
 
   return (
     <div className="p-6 space-y-4">
@@ -341,7 +341,7 @@ export default function SubmissionFlowsPage() {
                     <TableCell>{f.name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {(f.steps ?? [])
+                        {(f.groups ?? [])
                           .sort((a, b) => a.orderNo - b.orderNo)
                           .map((s) => (
                             <Chip key={s.orderNo} size="sm" variant="flat">

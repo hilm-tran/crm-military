@@ -5,6 +5,7 @@ import { useCallback, useMemo } from "react";
 export interface LeaveApprovalConfig {
   id: string;
   militaryPosition: string;
+  militaryPositionName?: string;
   maxApprovalDays: number;
   effectiveFrom: string;
   effectiveTo: string;

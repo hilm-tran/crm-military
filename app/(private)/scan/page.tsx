@@ -60,21 +60,23 @@ export default function ScanPage() {
           throw new Error("Dữ liệu QR không phải JSON hợp lệ");
         }
 
-        const isMilitary = "qrCode" in parsed || "unitCode" in parsed || "rankCode" in parsed;
+        const isMilitary = "qrCode" in parsed || "unitCode" in parsed || "rankCode" in parsed || "code" in parsed;
         const isCitizen = "citizenId" in parsed || "citizenid" in parsed;
 
         if (!isMilitary && !isCitizen) {
           throw new Error("Không nhận dạng được loại QR (quân nhân / người dân)");
         }
 
-        const response = await scanQR({ data: parsed });
+        const response = isMilitary
+          ? await scanQR({ militaryPersonnel: parsed })
+          : await scanQR({ citizen: parsed });
         const res = (response as any)?.data ?? response;
 
         setResult({
           status: res.status,
           reason: res.reason,
-          type: isMilitary ? "MILITARY_PERSONNEL" : "CITIZEN",
-          name: parsed.fullName ?? parsed.name,
+          type: res.scanType ?? (isMilitary ? "MILITARY_PERSONNEL" : "CITIZEN"),
+          name: res.militaryPersonnelFullName ?? res.citizenName ?? parsed.fullName ?? parsed.name,
           logId: res.id,
         });
         setState("result");

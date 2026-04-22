@@ -79,7 +79,6 @@ interface CreateModalProps {
 
 function CreateLeaveModal({ isOpen, onOpenChange, onSuccess }: CreateModalProps) {
   const { createLeaveRequest } = useLeaveRequest();
-  const [personnelId, setPersonnelId] = useState("");
   const [leaveFrom, setLeaveFrom] = useState<CalendarDate | null>(null);
   const [leaveTo, setLeaveTo] = useState<CalendarDate | null>(null);
   const [allowedOutCount, setAllowedOutCount] = useState(1);
@@ -87,17 +86,15 @@ function CreateLeaveModal({ isOpen, onOpenChange, onSuccess }: CreateModalProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (onClose: () => void) => {
-    if (!personnelId || !leaveFrom || !leaveTo) return;
+    if (!leaveFrom || !leaveTo) return;
     try {
       setIsSubmitting(true);
       await createLeaveRequest({
-        militaryPersonnelId: personnelId,
         leaveFrom: leaveFrom.toString(),
         leaveTo: leaveTo.toString(),
         allowedOutCount,
         reason: reason || undefined,
       });
-      setPersonnelId("");
       setLeaveFrom(null);
       setLeaveTo(null);
       setAllowedOutCount(1);
@@ -118,13 +115,6 @@ function CreateLeaveModal({ isOpen, onOpenChange, onSuccess }: CreateModalProps)
           <>
             <ModalHeader>Tạo đơn nghỉ phép</ModalHeader>
             <ModalBody className="gap-3">
-              <Input
-                label="Mã quân nhân (personnelId)"
-                placeholder="Nhập ID quân nhân..."
-                value={personnelId}
-                onValueChange={setPersonnelId}
-                isRequired
-              />
               <div className="flex gap-3">
                 <DateInput
                   label="Ngày bắt đầu"
@@ -159,7 +149,7 @@ function CreateLeaveModal({ isOpen, onOpenChange, onSuccess }: CreateModalProps)
               <Button
                 color="primary"
                 isLoading={isSubmitting}
-                isDisabled={!personnelId || !leaveFrom || !leaveTo}
+                isDisabled={!leaveFrom || !leaveTo}
                 onPress={() => handleSubmit(onClose)}
               >
                 Tạo đơn

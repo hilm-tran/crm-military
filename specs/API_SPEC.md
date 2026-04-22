@@ -1,7 +1,8 @@
 # Military Manager - API Integration Specification
 
-**Version:** 1.0  
-**Last Updated:** 2026-04-21
+**Version:** 2.0  
+**Last Updated:** 2026-04-22  
+**Swagger:** https://xgour62062.execute-api.ap-southeast-2.amazonaws.com/swagger-ui/index.html
 
 ---
 
@@ -12,49 +13,47 @@
 ```typescript
 // lib/api-client.ts
 const BASE_API = process.env.NEXT_PUBLIC_BASE_API;
+```
 
-export interface ApiResponse<T = any> {
-  data: T;
-  message?: string;
-  status: number;
+### Response Format
+
+All endpoints return:
+
+```json
+{
+  "httpStatus": 200,
+  "data": { ... },
+  "path": ""
 }
+```
 
-export const apiClient = {
-  fetch: async <T = any>(
-    path: string,
-    options: RequestInit = {},
-  ): Promise<T> => {
-    // 1. Extract JWT from session cookie
-    // 2. Auto-attach Authorization header
-    // 3. Handle FormData for file uploads
-    // 4. Parse response as JSON
-    // 5. Throw on non-OK status
+Paginated endpoints return:
+
+```json
+{
+  "httpStatus": 200,
+  "data": {
+    "content": [ ... ],
+    "pageable": { ... },
+    "totalPages": 1,
+    "totalElements": 7,
+    "size": 10,
+    "number": 0,
+    "first": true,
+    "last": true,
+    "empty": false
   },
-
-  post: <T = any>(path: string, body: any) => {...},
-  get: <T = any>(path: string) => {...},
-};
+  "path": ""
+}
 ```
 
-### Request/Response Format
+### Authentication
+
+All endpoints (except signin/signup) require:
 
 ```
-Request Header:
-  Authorization: Bearer {token}
-  Content-Type: application/json
-
-Response Format (all endpoints):
-  {
-    "data": {...},
-    "message": "Optional message",
-    "status": 200
-  }
-
-Error Response:
-  {
-    "message": "Error description",
-    "status": 400|401|403|500
-  }
+Authorization: Bearer {token}
+Content-Type: application/json
 ```
 
 ---
@@ -67,48 +66,29 @@ Error Response:
 
 **Request**:
 
-```typescript
+```json
 {
-  username: string;
-  password: string;
+  "username": "string",
+  "password": "string"
 }
 ```
 
 **Response**:
 
-```typescript
+```json
 {
-  data: {
-    token: string;              // JWT token
-    type: "Bearer";
-    user: {
-      id: string;
-      username: string;
-      email: string;
-      roles: string[];          // ["ROLE_SYSTEM_ADMIN"]
-    };
+  "httpStatus": 200,
+  "data": {
+    "token": "jwt-token",
+    "type": "Bearer",
+    "user": {
+      "id": "string",
+      "username": "string",
+      "email": "string",
+      "roles": ["ROLE_SYSTEM_ADMIN"]
+    }
   }
 }
-```
-
-**Frontend Implementation**:
-
-```typescript
-// hooks/use-auth.ts
-const signIn = async (data: SignInParams) => {
-  const response = await fetch(`${BASE_API}/api/auth/signin`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  const result = await response.json();
-  Cookies.set(CookieNames.Session, JSON.stringify(result.data), {
-    expires: 7,
-    path: "/",
-  });
-  return result;
-};
 ```
 
 ---
@@ -117,64 +97,24 @@ const signIn = async (data: SignInParams) => {
 
 **Purpose**: Create new user + military personnel
 
-**Requires**: JWT token (must be logged in first)
-
-**Authorization**: Role-based
-
-- `ROLE_USER`: ❌ Cannot create
-- `ROLE_ADMIN_UNIT`: ✅ Can create in own unit
-- `ROLE_ADMIN_REGION`: ✅ Can create in own region
-- `ROLE_SYSTEM_ADMIN`: ✅ Can create anywhere
+**Authorization**: `ROLE_ADMIN_UNIT`, `ROLE_ADMIN_REGION`, `ROLE_SYSTEM_ADMIN`
 
 **Request**:
 
-```typescript
+```json
 {
-  username: string;
-  email: string;
-  password?: string;
-  role: string[];          // ["ROLE_USER"], ["ROLE_ADMIN_UNIT"], etc.
-  militaryPersonnel: {
-    fullName: string;
-    rankCode: string;      // Reference to rank combobox
-    unitCode: string;      // Reference to unit combobox
-    positionCode: string;  // Reference to position combobox
-    imagePath?: string;    // S3 path (from upload)
+  "username": "string",
+  "email": "string",
+  "password": "string",
+  "role": ["ROLE_USER"],
+  "militaryPersonnel": {
+    "fullName": "string",
+    "rankCode": "DAI_UY",
+    "unitCode": "DV001",
+    "positionCode": "TRUNG_DOI_TRUONG",
+    "imagePath": "string (optional)"
   }
 }
-```
-
-**Response**:
-
-```typescript
-{
-  data: {
-    id: string;
-    username: string;
-    militaryPersonnel: {
-      id: string;
-      code: string; // Auto-generated: region|unit|rank|pos|00001
-      qrCode: string; // Auto-generated QR
-      fullName: string;
-      // ...
-    }
-  }
-}
-```
-
-**Frontend Implementation**:
-
-```typescript
-// hooks/use-soldier.ts
-const createSoldier = useCallback(async (data: CreateSoldierParams) => {
-  const result = await apiClient.post("/api/auth/signup", data);
-  addToast({
-    title: "Thành công",
-    description: "Đã thêm quân nhân mới",
-    color: "success",
-  });
-  return result;
-}, []);
 ```
 
 ---
@@ -183,95 +123,69 @@ const createSoldier = useCallback(async (data: CreateSoldierParams) => {
 
 **Purpose**: User logout
 
-**Response**:
-
-```typescript
-{
-  data: null,
-  message: "Signed out successfully"
-}
-```
-
 ---
 
 ## Personnel APIs
 
 ### GET /api/personnel
 
-**Purpose**: List military personnel with pagination & search
+**Purpose**: List military personnel (paginated)
 
-**Query Parameters**:
+**Query Parameters**: `page`, `size`, `keyword`
 
-```
-page=0          // 0-indexed
-size=10         // Items per page
-keyword=abc     // Search by name/code (optional)
-```
+**Response** (paginated):
 
-**Response**:
-
-```typescript
+```json
 {
-  data: {
-    content: Soldier[];
-    totalPages: number;
-    totalElements: number;
-    number: number;         // Current page (0-indexed)
-    size: number;
-    first: boolean;
-    last: boolean;
-    empty: boolean;
-  }
+  "id": 7732553894324217,
+  "fullName": "Hoàng Ngọc Chiến",
+  "regionCode": "QK2",
+  "rankCode": "DAI_UY",
+  "unitCode": "DV001",
+  "positionCode": "TRUNG_DOI_TRUONG",
+  "code": "DV001-DAI-UY-TRUNG-DOI-TRUONG-00001",
+  "qrCode": "iVBORw0KGgo... (base64 PNG)",
+  "qrSource": "SYSTEM",
+  "imageUrl": "/api/common/images/personnel/xxx.jpg"
 }
-```
-
-**Frontend Usage**:
-
-```typescript
-const { getSoldiers } = useSoldier();
-const response = await getSoldiers({ page: 0, size: 10, keyword: "" });
 ```
 
 ---
 
-### POST /api/personnel/upload-image
+### POST /api/personnel
 
-**Purpose**: Upload personnel photo
+**Purpose**: Create military personnel
 
-**Content-Type**: `multipart/form-data`
+**Request**:
 
-**Request Body**:
-
-```
-multipartFile: File  // Binary file data
-```
-
-**Response**:
-
-```typescript
+```json
 {
-  data: {
-    filename: string; // "personnel_20260421_xyz.jpg"
-    path: string; // "/api/common/images/personnel/personnel_20260421_xyz.jpg"
-    url: string; // Full S3 URL
-  }
+  "fullName": "string (max 200)",
+  "unitCode": "string (max 150)",
+  "rankCode": "DAI_UY",
+  "positionCode": "TRUNG_DOI_TRUONG",
+  "regionCode": "string",
+  "imagePath": "string"
 }
 ```
 
-**Frontend Implementation**:
+---
 
-```typescript
-const uploadImage = useCallback(async (file: File) => {
-  const formData = new FormData();
-  formData.append("multipartFile", file);
+### GET /api/personnel/{id}
 
-  const result = await apiClient.fetch("/api/personnel/upload-image", {
-    method: "POST",
-    body: formData,
-  });
-  return result;
-}, []);
-```
+**Purpose**: Get personnel details
+
+---
+
+### PUT /api/personnel/{id}
+
+**Purpose**: Update personnel
+
+---
+
+### DELETE /api/personnel/{id}
+
+**Purpose**: Delete personnel
 
 ---
 
@@ -279,20 +193,20 @@ const uploadImage = useCallback(async (file: File) => {
 
 ### GET /api/military-regions
 
-**Purpose**: List all military regions
+**Purpose**: List regions (paginated)
 
-**Response**:
+**Query Parameters**: `page`, `size`, `keyword`
 
-```typescript
+**Response item**:
+
+```json
 {
-  data: [
-    {
-      id: string;
-      code: string;        // "VN_HCM" (unique)
-      name: string;        // "Ho Chi Minh Region"
-      logoPath?: string;   // S3 path
-    }
-  ]
+  "id": 7732547877141113,
+  "regionCode": "QK1",
+  "regionName": "Quân khu 1",
+  "establishedDate": "1945-10-16",
+  "description": "Quân khu 1 là đơn vị quân sự...",
+  "logoUrl": "/api/common/images/region/xxx.jpg"
 }
 ```
 
@@ -300,17 +214,27 @@ const uploadImage = useCallback(async (file: File) => {
 
 ### POST /api/military-regions
 
-**Purpose**: Create new region
+**Purpose**: Create region
 
 **Request**:
 
-```typescript
+```json
 {
-  code: string;        // Must be unique
-  name: string;
-  logoPath?: string;   // From upload
+  "regionCode": "string (max 50)",
+  "regionName": "string (max 200)",
+  "establishedDate": "1945-10-16",
+  "description": "string (max 1000)",
+  "logoPath": "string (max 255)"
 }
 ```
+
+> **Note**: Request uses `logoPath`, response returns `logoUrl`
+
+---
+
+### GET /api/military-regions/{id}
+
+**Purpose**: Get region details
 
 ---
 
@@ -330,28 +254,42 @@ const uploadImage = useCallback(async (file: File) => {
 
 ### GET /api/military-units
 
-**Purpose**: List all units (optionally filtered by region)
+**Purpose**: List units (paginated)
 
-**Query Parameters**:
+**Query Parameters**: `page`, `size`, `keyword`, `regionCode`
 
-```
-regionCode=VN_HCM  // Optional filter
+**Response item**:
+
+```json
+{
+  "id": 7732553101674647,
+  "regionCode": "QK2",
+  "unitCode": "DV001",
+  "unitName": "Đơn vị 1",
+  "address": "So 1 Duong ABC, TP.HCM",
+  "establishedDate": "1975-04-30",
+  "description": "Don vi chu luc khu vuc phia Nam",
+  "logoUrl": "/api/common/images/unit/xxx.jpg"
+}
 ```
 
 ---
 
 ### POST /api/military-units
 
-**Purpose**: Create new unit
+**Purpose**: Create unit
 
 **Request**:
 
-```typescript
+```json
 {
-  code: string;
-  name: string;
-  regionCode: string;   // Must reference existing region
-  logoPath?: string;
+  "regionCode": "string (max 50)",
+  "unitCode": "string (max 50)",
+  "unitName": "string (max 200)",
+  "address": "string (max 500)",
+  "establishedDate": "1975-04-30",
+  "description": "string (max 1000)",
+  "logoPath": "string (max 255)"
 }
 ```
 
@@ -379,20 +317,16 @@ regionCode=VN_HCM  // Optional filter
 
 ### GET /api/submission-groups
 
-**Purpose**: List all submission groups
+**Purpose**: List submission groups (paginated)
 
-**Response**:
+**Response item**:
 
-```typescript
+```json
 {
-  data: [
-    {
-      id: string;
-      name: string;        // "Unit Approvers"
-      description?: string;
-      userIds?: string[];  // Users in this group
-    }
-  ]
+  "id": 123,
+  "name": "Nhóm duyệt đơn vị",
+  "description": "Mô tả nhóm",
+  "userIds": [1, 2, 3]
 }
 ```
 
@@ -400,42 +334,48 @@ regionCode=VN_HCM  // Optional filter
 
 ### POST /api/submission-groups
 
-**Purpose**: Create new group
+**Purpose**: Create group
 
 **Request**:
 
-```typescript
+```json
 {
-  name: string;
-  description?: string;
+  "name": "string (max 255)",
+  "description": "string (max 1000)"
 }
 ```
 
 ---
 
-### POST /api/submission-groups/{id}/users
+### PUT /api/submission-groups/{id}
 
-**Purpose**: Add user to group
-
-**Request**:
-
-```typescript
-{
-  userId: string;
-}
-```
-
----
-
-### DELETE /api/submission-groups/{id}/users/{userId}
-
-**Purpose**: Remove user from group
+**Purpose**: Update group
 
 ---
 
 ### DELETE /api/submission-groups/{id}
 
-**Purpose**: Delete group (only if not used in any flow)
+**Purpose**: Delete group (fails if used in a flow)
+
+---
+
+### POST /api/submission-groups/{id}/users
+
+**Purpose**: Add users to group
+
+**Request**:
+
+```json
+{
+  "userId": "integer"
+}
+```
+
+---
+
+### DELETE /api/submission-groups/{id}/users
+
+**Purpose**: Remove users from group
 
 ---
 
@@ -443,51 +383,46 @@ regionCode=VN_HCM  // Optional filter
 
 ### GET /api/submission-flows
 
-**Purpose**: List all submission flows
+**Purpose**: List flows (paginated)
 
-**Response**:
+**Response item**:
 
-```typescript
+```json
 {
-  data: [
-    {
-      id: string;
-      code: string;        // "LEAVE" or "NGHI_PHEP" (unique, case-insensitive)
-      name: string;
-      steps: Array<{
-        orderNo: number;   // 1, 2, 3, ...
-        groupId: string;
-      }>;
-    }
+  "id": 123,
+  "code": "LEAVE",
+  "name": "Luồng phê duyệt nghỉ phép",
+  "description": "Mô tả luồng",
+  "groups": [
+    { "orderNo": 1, "groupId": 10 },
+    { "orderNo": 2, "groupId": 20 }
   ]
 }
 ```
+
+> **Note**: Swagger uses `groups` (not `steps`) for flow steps
 
 ---
 
 ### POST /api/submission-flows
 
-**Purpose**: Create new flow
+**Purpose**: Create flow
 
 **Request**:
 
-```typescript
+```json
 {
-  code: string; // Unique, will be normalized to uppercase
-  name: string;
-  steps: Array<{
-    orderNo: number; // Must be 1, 2, 3, ... (continuous)
-    groupId: string; // Must reference existing group
-  }>;
+  "code": "string (max 100, unique, case-insensitive)",
+  "name": "string (max 255)",
+  "description": "string (max 1000)",
+  "groups": [
+    { "orderNo": 1, "groupId": 10 },
+    { "orderNo": 2, "groupId": 20 }
+  ]
 }
 ```
 
-**Validation**:
-
-- Code must be unique (case-insensitive)
-- OrderNo must start from 1 and be continuous
-- No duplicate groups in same flow
-- GroupId must exist
+**Validation**: No duplicate groups, orderNo must be continuous from 1
 
 ---
 
@@ -507,22 +442,19 @@ regionCode=VN_HCM  // Optional filter
 
 ### GET /api/leave-approval-configs
 
-**Purpose**: List all approval configs
+**Purpose**: List approval configs
 
-**Response**:
+**Response item**:
 
-```typescript
+```json
 {
-  data: [
-    {
-      id: string;
-      militaryPosition: string;   // "CAPTAIN", "MAJOR", etc.
-      maxApprovalDays: number;    // 5, 10, 30, etc.
-      effectiveFrom: string;      // "2026-01-01"
-      effectiveTo: string;        // "2026-12-31"
-      active: boolean;
-    }
-  ]
+  "id": 123,
+  "militaryPosition": "TRUNG_DOI_TRUONG",
+  "militaryPositionName": "Trung đội trưởng",
+  "maxApprovalDays": 5,
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-12-31",
+  "active": true
 }
 ```
 
@@ -530,25 +462,19 @@ regionCode=VN_HCM  // Optional filter
 
 ### POST /api/leave-approval-configs
 
-**Purpose**: Create new config
+**Purpose**: Create config
 
 **Request**:
 
-```typescript
+```json
 {
-  militaryPosition: string;
-  maxApprovalDays: number;
-  effectiveFrom: string;   // ISO date
-  effectiveTo: string;     // ISO date
-  active?: boolean;        // Default: true
+  "militaryPosition": "TRUNG_DOI_TRUONG",
+  "maxApprovalDays": 5,
+  "effectiveFrom": "2026-01-01",
+  "effectiveTo": "2026-12-31",
+  "active": true
 }
 ```
-
-**Validation**:
-
-- `effectiveFrom <= effectiveTo`
-- For same position: no overlapping date ranges
-- Unique constraint: `(militaryPosition, effectiveFrom, effectiveTo)`
 
 ---
 
@@ -558,43 +484,21 @@ regionCode=VN_HCM  // Optional filter
 
 ---
 
-### PATCH /api/leave-approval-configs/{id}/active
-
-**Purpose**: Toggle active status
-
-**Request Body**:
-
-```typescript
-{
-} // Empty, just toggle current state
-```
-
----
-
 ### DELETE /api/leave-approval-configs/{id}
 
 **Purpose**: Delete config
 
 ---
 
+### PATCH /api/leave-approval-configs/{id}/active
+
+**Purpose**: Toggle active status (empty body)
+
+---
+
 ### GET /api/leave-approval-configs/applicable
 
-**Purpose**: Get configs applicable for current logged-in user
-
-**Response**:
-
-```typescript
-{
-  data: [
-    {
-      id: string;
-      militaryPosition: string;
-      maxApprovalDays: number;
-      // ...
-    }
-  ]
-}
-```
+**Purpose**: Get configs applicable for current user by position & date
 
 ---
 
@@ -602,46 +506,37 @@ regionCode=VN_HCM  // Optional filter
 
 ### POST /api/leave-requests
 
-**Purpose**: Create new leave request
+**Purpose**: Create leave request
 
 **Request**:
 
-```typescript
+```json
 {
-  militaryPersonnelId: string;
-  leaveFrom: string;           // ISO date "2026-05-01"
-  leaveTo: string;             // ISO date "2026-05-05"
-  allowedOutCount: number;     // 3
-  reason?: string;
+  "leaveFrom": "2026-05-01",
+  "leaveTo": "2026-05-05",
+  "reason": "string",
+  "allowedOutCount": 3
 }
 ```
 
-**Backend Processing**:
-
-1. Find default flow (code = "LEAVE" or "NGHI_PHEP")
-2. Create LeaveRequest record
-3. Create Round 1.0001: assignee=requestor, status=TRINH
-4. Create Round 1.0002: assignee=next_in_flow, status=CHUA_XU_LY
-5. Return created request
-
 **Response**:
 
-```typescript
+```json
 {
-  data: {
-    id: string;
-    militaryPersonnelId: string;
-    userId: string;
-    leaveFrom: string;
-    leaveTo: string;
-    status: string;
-    flowId: string;
-    currentOrderNo: number;
-    currentRound: string;
-    currentAssignee: string;
-    allowedOutCount: number;
-    usedOutCount?: null;
-  }
+  "id": 123,
+  "militaryPersonnelId": 456,
+  "userId": 789,
+  "createdAt": "2026-04-22T10:00:00",
+  "leaveFrom": "2026-05-01",
+  "leaveTo": "2026-05-05",
+  "status": "string",
+  "flowId": 1,
+  "currentOrderNo": 1,
+  "currentRound": "1.0001",
+  "currentAssignee": "username",
+  "reason": "string",
+  "allowedOutCount": 3,
+  "usedOutCount": 0
 }
 ```
 
@@ -649,58 +544,38 @@ regionCode=VN_HCM  // Optional filter
 
 ### GET /api/leave-requests/my
 
-**Purpose**: Get current user's leave requests
-
-**Response**:
-
-```typescript
-{
-  data: LeaveRequest[]
-}
-```
+**Purpose**: List user's own leave requests
 
 ---
 
 ### GET /api/leave-requests/pending
 
-**Purpose**: Get leave requests pending for current user's approval
-
-**Response**:
-
-```typescript
-{
-  data: LeaveRequest[]
-}
-```
+**Purpose**: List requests pending for current user's approval
 
 ---
 
 ### GET /api/leave-requests/{id}
 
-**Purpose**: Get specific leave request details
+**Purpose**: Get leave request details
 
 ---
 
 ### GET /api/leave-requests/{id}/histories
 
-**Purpose**: Get approval history for a leave request
+**Purpose**: Get approval history
 
-**Response**:
+**Response item**:
 
-```typescript
+```json
 {
-  data: [
-    {
-      id: string;
-      round: string;       // "1.0001", "1.0002", "2.0001", etc.
-      status: string;      // "TRINH", "CHUA_XU_LY", "DA_DUYET", "TU_CHOI", "TRA_VE"
-      assignee: string;    // Username
-      order: number;       // Flow step
-      reason?: string;
-      createdAt: string;
-      updatedAt: string;
-    }
-  ]
+  "id": 123,
+  "round": "1.0001",
+  "status": "TRINH | CHUA_XU_LY | DA_DUYET | TU_CHOI | TRA_VE",
+  "assignee": "username",
+  "order": 1,
+  "reason": "string",
+  "createdAt": "2026-04-22T10:00:00",
+  "updatedAt": "2026-04-22T10:05:00"
 }
 ```
 
@@ -708,92 +583,56 @@ regionCode=VN_HCM  // Optional filter
 
 ### POST /api/leave-requests/{id}/accept
 
-**Purpose**: Accept (tiếp nhận) a leave request
-
-**Request Body**:
-
-```typescript
-{
-} // Empty
-```
-
-**Result**: Round status changes from CHUA_XU_LY to TRINH (in review)
+**Purpose**: Tiếp nhận đơn (accept for review). Empty body.
 
 ---
 
 ### POST /api/leave-requests/{id}/approve
 
-**Purpose**: Approve leave request
+**Purpose**: Duyệt đơn
 
-**Request Body**:
+**Request**:
 
-```typescript
+```json
 {
-  reason?: string;  // Optional approval note
+  "reason": "string (optional)"
 }
 ```
-
-**Result**:
-
-- Current round marked as DA_DUYET
-- Move to next round or complete if last step
-- User can now pass QR validation
 
 ---
 
 ### POST /api/leave-requests/{id}/return
 
-**Purpose**: Return (reject) leave request
+**Purpose**: Trả về đơn
 
-**Request Body**:
+**Request**:
 
-```typescript
+```json
 {
-  reason: string; // Mandatory rejection reason
+  "reason": "string (required)"
 }
 ```
-
-**Result**:
-
-- Current round marked as TRA_VE
-- Status reverts to pending requestor action
-- Requestor must edit and resubmit
 
 ---
 
 ### POST /api/leave-requests/{id}/submit-next
 
-**Purpose**: Escalate to next approval level
-
-**Request Body**:
-
-```typescript
-{
-} // Empty
-```
-
-**Scenario**:
-
-- Current approver doesn't have enough `maxApprovalDays`
-- Forward to next level in flow
-- Creates new round with higher authority
+**Purpose**: Trình tiếp lên cấp trên. Empty body.
 
 ---
 
 ### PUT /api/leave-requests/{id}/edit
 
-**Purpose**: Edit leave request details
+**Purpose**: Sửa đơn (khi đã bị trả về)
 
-**Requires**: Must be creator and in returned state
+**Request**:
 
-**Request Body**:
-
-```typescript
+```json
 {
-  leaveFrom?: string;
-  leaveTo?: string;
-  allowedOutCount?: number;
-  reason?: string;
+  "leaveFrom": "date",
+  "leaveTo": "date",
+  "allowedOutCount": 3,
+  "reason": "string"
 }
 ```
 
@@ -801,36 +640,30 @@ regionCode=VN_HCM  // Optional filter
 
 ### POST /api/leave-requests/{id}/resubmit
 
-**Purpose**: Resubmit after rejection
-
-**Result**:
-
-- Create new Round 1.0001 (restart workflow)
-- Previous rounds preserved in history
+**Purpose**: Trình lại sau khi sửa. Empty body.
 
 ---
 
 ### POST /api/leave-requests/{id}/supplement
 
-**Purpose**: Request amendment to approved leave
+**Purpose**: Bổ sung đơn đã duyệt (mở vòng duyệt mới)
 
-**Request Body**:
+**Request**:
 
-```typescript
+```json
 {
-  leaveFrom?: string;
-  leaveTo?: string;
-  allowedOutCount?: number;
-  reason?: string;
+  "leaveFrom": "date",
+  "leaveTo": "date",
+  "allowedOutCount": 3,
+  "reason": "string"
 }
 ```
 
-**Backend Processing**:
+---
 
-1. Increment major round number (1 → 2, 2 → 3, etc.)
-2. Create new Round 2.0001 (for requestor to submit)
-3. Create new Round 2.0002 (for next approver)
-4. Restart approval workflow
+### GET /api/leave-requests/approval-capability
+
+**Purpose**: Check user's approval authority (quyền duyệt)
 
 ---
 
@@ -838,102 +671,85 @@ regionCode=VN_HCM  // Optional filter
 
 ### POST /api/qr-scan-logs/scan
 
-**Purpose**: Process QR scan
+**Purpose**: Process QR scan at gate
 
 **Request**:
 
-```typescript
+```json
 {
-  data:
-    | {  // Military Personnel
-        id: string;
-        fullName: string;
-        rankCode: string;
-        unitCode: string;
-        positionCode: string;
-        qrCode: string;
-      }
-    | {  // Civilian
-        name: string;
-        birthday: string;
-        address: string;
-        citizenId: string;
-        issueDate: string;
-      }
-}
-```
-
-**Backend Validation (Military Personnel)**:
-
-```
-IF type = MILITARY:
-  1. Find valid approved leave request for this person
-  2. Check: status = DA_DUYET
-  3. Check: today ∈ [leaveFrom, leaveTo]
-  4. Check: usedOutCount < allowedOutCount
-
-  IF all pass:
-    → status = DONG_Y
-    → usedOutCount = usedOutCount + 1
-  ELSE:
-    → status = TU_CHOI
-    → reason = "Không có quyền ra"
-
-IF type = CIVILIAN:
-  → status = DANG_XU_LY (manual approval required)
-```
-
-**Response**:
-
-```typescript
-{
-  data: {
-    id: string;
-    type: "MILITARY_PERSONNEL" | "CITIZEN";
-    status: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
-    payload: {...};  // Original QR data
-    reason?: string;
-    createdAt: string;
+  "militaryPersonnel": {
+    "id": 123,
+    "code": "DV001-DAI-UY-TRUNG-DOI-TRUONG-00001",
+    "fullName": "Hoàng Ngọc Chiến",
+    "regionCode": "QK2",
+    "rankCode": "DAI_UY",
+    "unitCode": "DV001",
+    "positionCode": "TRUNG_DOI_TRUONG"
   }
 }
 ```
 
----
+Or for civilian:
 
-### POST /api/qr-scan-logs/{id}/approve
-
-**Purpose**: Approve civilian entry
-
-**Request Body**:
-
-```typescript
+```json
 {
-} // Empty
-```
-
-**Result**: status changes from DANG_XU_LY to DONG_Y
-
----
-
-### POST /api/qr-scan-logs/{id}/reject
-
-**Purpose**: Reject civilian entry
-
-**Request Body**:
-
-```typescript
-{
-  reason?: string;  // Optional rejection reason
+  "citizen": {
+    "name": "Nguyễn Văn B",
+    "birthday": "1990-01-01",
+    "address": "123 ABC, TP.HCM",
+    "citizenId": "012345678901",
+    "issueDate": "2020-01-01"
+  }
 }
 ```
 
-**Result**: status changes from DANG_XU_LY to TU_CHOI
+**Response**:
+
+```json
+{
+  "id": 123,
+  "scanType": "MILITARY_PERSONNEL | CITIZEN",
+  "scannedAt": "2026-04-22T10:00:00",
+  "status": "DONG_Y | TU_CHOI | DANG_XU_LY",
+  "reason": "string",
+  "militaryPersonnelId": 456,
+  "militaryPersonnelCode": "DV001-DAI-UY-...",
+  "militaryPersonnelFullName": "Hoàng Ngọc Chiến",
+  "citizenName": "string",
+  "citizenBirthday": "date",
+  "citizenAddress": "string",
+  "citizenId": "string",
+  "citizenIssueDate": "date",
+  "leaveRequestId": 789,
+  "approvedRoundNo": "1.0002"
+}
+```
 
 ---
 
 ### GET /api/qr-scan-logs/{id}
 
-**Purpose**: Get specific scan log details
+**Purpose**: Get scan log details
+
+---
+
+### POST /api/qr-scan-logs/{id}/approve
+
+**Purpose**: Approve citizen entry. Empty body.
+
+---
+
+### POST /api/qr-scan-logs/{id}/reject
+
+**Purpose**: Reject citizen entry
+
+**Request**:
+
+```json
+{
+  "reason": "string (optional)"
+}
+```
 
 ---
 
@@ -941,33 +757,11 @@ IF type = CIVILIAN:
 
 ### POST /api/common/upload-image
 
-**Purpose**: Upload file (personnel photo, region/unit logo)
-
-**Query Parameters**:
-
-```
-category=personnel|region|unit
-```
+**Purpose**: Upload image to S3 (personnel photo, region/unit logo)
 
 **Content-Type**: `multipart/form-data`
 
-**Request Body**:
-
-```
-multipartFile: File
-```
-
-**Response**:
-
-```typescript
-{
-  data: {
-    filename: string;
-    path: string;
-    url: string;
-  }
-}
-```
+**Form field**: `multipartFile`
 
 ---
 
@@ -975,179 +769,35 @@ multipartFile: File
 
 **Purpose**: Retrieve image from S3
 
-**URL Format**:
+**URL examples**:
 
 ```
-/api/common/images/personnel/xyz_photo.jpg
-/api/common/images/region/logo_hcm.png
-/api/common/images/unit/logo_unit_1.png
+/api/common/images/personnel/xxx.jpg
+/api/common/images/region/xxx.png
+/api/common/images/unit/xxx.jpg
 ```
 
 ---
 
 ## Combobox APIs
 
+All return `{ data: [{ code: string, name: string }] }`
+
 ### GET /api/common/combobox/ranks
 
-**Purpose**: Get list of ranks for dropdowns
-
-**Response**:
-
-```typescript
-{
-  data: [
-    { code: "SOLDIER", name: "Binh nhất" },
-    { code: "CORPORAL", name: "Hạ sĩ" },
-    { code: "SERGEANT", name: "Trung sĩ" },
-    // ...
-  ];
-}
-```
-
----
+Rank codes: `DAI_TUONG`, `THUONG_TUONG`, `TRUNG_TUONG`, `THIEU_TUONG`, `DAI_TA`, `THUONG_TA`, `TRUNG_TA`, `THIEU_TA`, `DAI_UY`, `THUONG_UY`, `TRUNG_UY`, `THIEU_UY`, etc.
 
 ### GET /api/common/combobox/positions
 
-**Purpose**: Get list of positions
-
-**Response**:
-
-```typescript
-{
-  data: [
-    { code: "RECRUIT", name: "Tân binh" },
-    { code: "STAFF", name: "Nhân viên" },
-    { code: "OFFICER", name: "Sĩ quan" },
-    // ...
-  ];
-}
-```
-
----
+Position codes: `CHI_HUY_TRUONG`, `TRUNG_DOAN_TRUONG`, `TIEU_DOAN_TRUONG`, `DAI_DOI_TRUONG`, `TRUNG_DOI_TRUONG`, `TIEU_DOI_TRUONG`, etc.
 
 ### GET /api/common/combobox/regions
 
-**Purpose**: Get list of regions (filtered by user role)
+Returns regions filtered by user role.
 
-**Response**:
+### GET /api/common/combobox/units?regionCode=QK1
 
-```typescript
-{
-  data: [
-    { code: "VN_HCM", name: "Ho Chi Minh Region" },
-    { code: "VN_HN", name: "Hanoi Region" },
-    // ...
-  ];
-}
-```
-
----
-
-### GET /api/common/combobox/units?regionCode=VN_HCM
-
-**Purpose**: Get units in specific region (filtered by user role)
-
-**Query Parameters**:
-
-```
-regionCode=VN_HCM  // Optional
-```
-
-**Response**:
-
-```typescript
-{
-  data: [
-    { code: "UNIT_001", name: "Tiểu đoàn 1" },
-    { code: "UNIT_002", name: "Tiểu đoàn 2" },
-    // ...
-  ];
-}
-```
-
----
-
-## Error Response Examples
-
-### 400 Bad Request
-
-```json
-{
-  "message": "Invalid request: effectiveFrom must be before effectiveTo",
-  "status": 400
-}
-```
-
-### 401 Unauthorized
-
-```json
-{
-  "message": "Unauthorized: Invalid or expired token",
-  "status": 401
-}
-```
-
-### 403 Forbidden
-
-```json
-{
-  "message": "Forbidden: Insufficient permissions to approve leave",
-  "status": 403
-}
-```
-
-### 404 Not Found
-
-```json
-{
-  "message": "Leave request not found",
-  "status": 404
-}
-```
-
-### 409 Conflict
-
-```json
-{
-  "message": "Conflict: Region code already exists",
-  "status": 409
-}
-```
-
-### 500 Internal Server Error
-
-```json
-{
-  "message": "Internal server error: Database connection failed",
-  "status": 500
-}
-```
-
----
-
-## Rate Limiting & Throttling
-
-⚠️ **TODO**: Implement rate limiting
-
-Suggested:
-
-- Login: 5 attempts per minute
-- General API: 100 requests per minute per user
-- File upload: 10 MB per file, 100 MB per day
-
----
-
-## CORS Configuration
-
-⚠️ **TODO**: Configure CORS headers
-
-Expected:
-
-```
-Access-Control-Allow-Origin: https://military-manager.com
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH
-Access-Control-Allow-Headers: Authorization, Content-Type
-```
+Returns units filtered by region and user role.
 
 ---
 

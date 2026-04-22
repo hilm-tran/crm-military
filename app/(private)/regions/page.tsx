@@ -55,17 +55,17 @@ function RegionFormModal({ isOpen, onOpenChange, editing, onSuccess }: FormModal
     if (!regionCode.trim() || !regionName.trim()) return;
     try {
       setIsSubmitting(true);
-      let logoUrl = editing?.logoUrl ?? undefined;
+      let logoPath = editing?.logoUrl ?? undefined;
 
       if (logoFile) {
         const res = await uploadLogo(logoFile);
-        logoUrl = (res as any)?.data?.path ?? (res as any)?.data ?? logoUrl;
+        logoPath = (res as any)?.data?.path ?? (res as any)?.data ?? logoPath;
       }
 
       const payload = {
         regionCode,
         regionName,
-        logoUrl,
+        logoPath,
         establishedDate: establishedDate || undefined,
         description: description || undefined,
       };
@@ -164,7 +164,7 @@ function DeleteModal({ isOpen, onOpenChange, target, onSuccess }: DeleteModalPro
     if (!target) return;
     try {
       setIsDeleting(true);
-      await deleteRegion(target.id);
+      await deleteRegion(String(target.id));
       onClose();
       onSuccess();
     } catch {

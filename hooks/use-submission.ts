@@ -23,16 +23,17 @@ export interface UpdateSubmissionGroupParams
 }
 
 // SubmissionFlow Types
-export interface SubmissionFlowStep {
+export interface SubmissionFlowGroup {
   orderNo: number;
-  groupId: string;
+  groupId: string | number;
 }
 
 export interface SubmissionFlow {
   id: string;
   code: string;
   name: string;
-  steps: SubmissionFlowStep[];
+  description?: string;
+  groups: SubmissionFlowGroup[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -40,7 +41,8 @@ export interface SubmissionFlow {
 export interface CreateSubmissionFlowParams {
   code: string;
   name: string;
-  steps: SubmissionFlowStep[];
+  description?: string;
+  groups: SubmissionFlowGroup[];
 }
 
 export interface UpdateSubmissionFlowParams extends CreateSubmissionFlowParams {
@@ -171,9 +173,10 @@ export const useSubmission = () => {
     async (groupId: string, userId: string) => {
       try {
         await apiClient.fetch(
-          `/api/submission-groups/${groupId}/users/${userId}`,
+          `/api/submission-groups/${groupId}/users`,
           {
             method: "DELETE",
+            body: JSON.stringify({ userId }),
           },
         );
 

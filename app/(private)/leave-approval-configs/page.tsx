@@ -44,8 +44,8 @@ const MILITARY_POSITIONS = [
   { code: "CHI_HUY_TRUONG", name: "Chỉ huy trưởng" },
 ];
 
-function positionLabel(code: string) {
-  return MILITARY_POSITIONS.find((p) => p.code === code)?.name ?? code;
+function positionLabel(code: string, positionName?: string) {
+  return positionName ?? MILITARY_POSITIONS.find((p) => p.code === code)?.name ?? code;
 }
 
 function formatDate(iso: string) {
@@ -243,7 +243,7 @@ export default function LeaveApprovalConfigsPage() {
       const list: LeaveApprovalConfig[] = Array.isArray(raw) ? raw : raw?.content ?? [];
       const filtered = debouncedKeyword
         ? list.filter((c) =>
-            positionLabel(c.militaryPosition).toLowerCase().includes(debouncedKeyword.toLowerCase())
+            positionLabel(c.militaryPosition, c.militaryPositionName).toLowerCase().includes(debouncedKeyword.toLowerCase())
           )
         : list;
       setTotalPages(Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
@@ -321,7 +321,7 @@ export default function LeaveApprovalConfigsPage() {
               : configs.map((c, i) => (
                   <TableRow key={c.id}>
                     <TableCell>{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
-                    <TableCell className="font-medium">{positionLabel(c.militaryPosition)}</TableCell>
+                    <TableCell className="font-medium">{positionLabel(c.militaryPosition, c.militaryPositionName)}</TableCell>
                     <TableCell>{c.maxApprovalDays} ngày</TableCell>
                     <TableCell>{formatDate(c.effectiveFrom)}</TableCell>
                     <TableCell>{formatDate(c.effectiveTo)}</TableCell>

@@ -16,7 +16,7 @@ export interface MilitaryRegion {
 export interface CreateRegionParams {
   regionCode: string;
   regionName: string;
-  logoUrl?: string;
+  logoPath?: string;
   establishedDate?: string;
   description?: string;
 }

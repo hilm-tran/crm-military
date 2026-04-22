@@ -31,7 +31,6 @@ export interface LeaveRequest {
 }
 
 export interface CreateLeaveRequestParams {
-  militaryPersonnelId: string;
   leaveFrom: string;
   leaveTo: string;
   allowedOutCount: number;

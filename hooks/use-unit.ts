@@ -19,7 +19,7 @@ export interface CreateUnitParams {
   unitCode: string;
   unitName: string;
   regionCode: string;
-  logoUrl?: string;
+  logoPath?: string;
   address?: string;
   establishedDate?: string;
   description?: string;

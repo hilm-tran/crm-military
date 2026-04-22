@@ -69,18 +69,18 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
     if (!unitCode.trim() || !unitName.trim() || !selectedRegion) return;
     try {
       setIsSubmitting(true);
-      let logoUrl = editing?.logoUrl ?? undefined;
+      let logoPath = editing?.logoUrl ?? undefined;
 
       if (logoFile) {
         const res = await uploadLogo(logoFile);
-        logoUrl = (res as any)?.data?.path ?? (res as any)?.data ?? logoUrl;
+        logoPath = (res as any)?.data?.path ?? (res as any)?.data ?? logoPath;
       }
 
       const payload = {
         unitCode,
         unitName,
         regionCode: selectedRegion,
-        logoUrl,
+        logoPath,
         address: address || undefined,
         establishedDate: establishedDate || undefined,
         description: description || undefined,

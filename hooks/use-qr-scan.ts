@@ -3,12 +3,13 @@ import { addToast } from "@heroui/toast";
 import { useCallback, useMemo } from "react";
 
 export interface MilitaryPersonnelQR {
-  id: string;
+  id?: number;
+  code?: string;
   fullName: string;
-  rankCode: string;
-  unitCode: string;
-  positionCode: string;
-  qrCode: string;
+  regionCode?: string;
+  rankCode?: string;
+  unitCode?: string;
+  positionCode?: string;
 }
 
 export interface CitizenQR {
@@ -19,20 +20,27 @@ export interface CitizenQR {
   issueDate: string;
 }
 
-export type QRScanData = MilitaryPersonnelQR | CitizenQR;
-
 export interface QRScanLog {
   id: string;
-  type: "MILITARY_PERSONNEL" | "CITIZEN";
+  scanType: "MILITARY_PERSONNEL" | "CITIZEN";
+  scannedAt?: string;
   status: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
-  payload: Record<string, any>;
   reason?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  militaryPersonnelId?: number;
+  militaryPersonnelCode?: string;
+  militaryPersonnelFullName?: string;
+  citizenName?: string;
+  citizenBirthday?: string;
+  citizenAddress?: string;
+  citizenId?: string;
+  citizenIssueDate?: string;
+  leaveRequestId?: number;
+  approvedRoundNo?: string;
 }
 
 export interface ScanQRParams {
-  data: QRScanData;
+  militaryPersonnel?: MilitaryPersonnelQR;
+  citizen?: CitizenQR;
 }
 
 export const useQRScan = () => {
