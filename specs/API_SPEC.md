@@ -1,6 +1,6 @@
 # Military Manager - API Integration Specification
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Last Updated:** 2026-04-22  
 **Swagger:** https://xgour62062.execute-api.ap-southeast-2.amazonaws.com/swagger-ui/index.html
 
@@ -552,6 +552,8 @@ Content-Type: application/json
 
 **Purpose**: List requests pending for current user's approval
 
+**Frontend Usage**: Used by both `/requests` page (tab "Chờ tôi duyệt") and `/history` page (Lịch sử ra vào cổng)
+
 ---
 
 ### GET /api/leave-requests/{id}
@@ -669,9 +671,11 @@ Content-Type: application/json
 
 ## QR Scan APIs
 
+> **Note**: No `GET /api/qr-scan-logs` list endpoint exists on Swagger. The `/history` page uses `GET /api/leave-requests/pending` instead. QR scan endpoints are only used by the `/scan` page for gate control.
+
 ### POST /api/qr-scan-logs/scan
 
-**Purpose**: Process QR scan at gate
+**Purpose**: Process QR scan at gate. Used by `/scan` page only.
 
 **Request**:
 
