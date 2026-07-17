@@ -30,3 +30,19 @@ Not configured. The S3 website endpoint is HTTP-only. To add HTTPS/custom domain
 
 ## Rollback
 Previous versions are not retained (`--delete` removes stale files on each sync and bucket versioning is off). To roll back, rebuild from the desired git commit and re-run the deploy command.
+
+## Backend / CORS
+Backend lives in a separate repo: `D:\military` (Spring Boot on Lambda, API Gateway HTTP API `military-manager`, SAM stack).
+
+Fixed 2026-07-17: all protected endpoints returned 401 on CORS preflight `OPTIONS` because `WebSecurityConfig`'s `anyRequest().authenticated()` blocked preflight before it reached the controllers' `@CrossOrigin`. Fix: permit `HttpMethod.OPTIONS` on `/**` in the security filter chain (`src/main/java/com/military/security/WebSecurityConfig.java`).
+
+Backend build/deploy (code-only update, no CloudFormation changes):
+```powershell
+# Must use JDK 17 — Lombok annotation processing fails on newer JDKs (e.g. 25) installed as default
+cd D:\military
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17.0.18"
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+mvn clean package -DskipTests
+aws lambda update-function-code --function-name military-manager-api --zip-file fileb://target/military-manager-0.0.1-SNAPSHOT-aws.jar
+```
+For full infra changes (new resources, params), use `deploy_lambda.ps1` / `sam deploy` per `D:\military\DEPLOY_LAMBDA.md` instead — that needs `JwtSecret` and `S3Bucket` values.
