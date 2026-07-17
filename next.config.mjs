@@ -1,13 +1,8 @@
 const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination:
-          "https://xgour62062.execute-api.ap-southeast-2.amazonaws.com/api/:path*",
-      },
-    ];
-  },
+  // Static export for S3 + CloudFront hosting — no Node/Edge server available at runtime.
+  output: "export",
+  // Emits <route>/index.html so S3 (static website hosting) resolves directory index docs.
+  trailingSlash: true,
 };
 
 export default nextConfig;
