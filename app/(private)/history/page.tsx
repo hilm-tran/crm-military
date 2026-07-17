@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { LeaveRequest, useLeaveRequest } from "@/hooks/use-leave-request";
 import {
@@ -96,7 +97,11 @@ export default function HistoryPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Lịch sử ra vào cổng</h1>
+      <PageHeader
+        icon="mdi:history"
+        title="Lịch sử ra vào cổng"
+        subtitle="Nhật ký xử lý đơn nghỉ phép qua cổng doanh trại"
+      />
 
       <div className="flex gap-4 items-center justify-between">
         <Input
@@ -108,7 +113,9 @@ export default function HistoryPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button variant="flat" onPress={loadData}>Làm mới</Button>
+        <Button variant="flat" onPress={loadData} startContent={<Icon icon="mdi:refresh" />}>
+          Làm mới
+        </Button>
       </div>
 
       <Table
@@ -143,7 +150,7 @@ export default function HistoryPage() {
             : filtered.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-gray-400 py-8" colSpan={8}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={8}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có dữ liệu"}
                   </TableCell>
                 </TableRow>

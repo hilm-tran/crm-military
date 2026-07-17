@@ -1,7 +1,9 @@
 "use client";
 
 import { AddSoldierModal } from "@/components/AddSoldierModal";
+import { PageHeader } from "@/components/PageHeader";
 import { Button, useDisclosure } from "@heroui/react";
+import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 
 export default function AddSoldier() {
@@ -14,15 +16,14 @@ export default function AddSoldier() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Thêm quân nhân</h1>
-        <p className="text-gray-600">
-          Tạo hồ sơ và tài khoản cho quân nhân mới
-        </p>
-      </div>
+    <div className="p-6 space-y-6">
+      <PageHeader
+        icon="mdi:account-plus-outline"
+        title="Thêm quân nhân"
+        subtitle="Tạo hồ sơ và tài khoản cho quân nhân mới"
+      />
 
-      <Button color="primary" onPress={onOpen} size="lg">
+      <Button color="primary" onPress={onOpen} size="lg" startContent={<Icon icon="mdi:plus" />}>
         Mở form thêm quân nhân
       </Button>
 

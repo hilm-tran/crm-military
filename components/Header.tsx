@@ -1,7 +1,7 @@
 "use client";
 
 import { CookieNames } from "@/types/global.enum";
-import { Avatar, Chip } from "@heroui/react";
+import { Avatar, Chip, Divider } from "@heroui/react";
 import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -57,9 +57,15 @@ export default function Header() {
     : "??";
 
   return (
-    <header className="flex items-center justify-between px-6 py-3 bg-white border-b shrink-0 shadow-sm">
+    <header className="flex items-center justify-between px-6 py-3.5 bg-content1 border-b border-divider shrink-0">
       {/* Page title */}
-      <h2 className="text-lg font-semibold text-gray-800">{pageTitle}</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="text-lg font-semibold text-foreground">{pageTitle}</h2>
+        <span className="hidden sm:flex items-center gap-1.5 text-xs text-default-500">
+          <span className="h-1.5 w-1.5 rounded-full bg-success-500 animate-pulse" />
+          Hệ thống hoạt động
+        </span>
+      </div>
 
       {/* User info */}
       <div className="flex items-center gap-3">
@@ -68,11 +74,12 @@ export default function Header() {
             {roleConfig.label}
           </Chip>
         )}
+        <Divider orientation="vertical" className="h-8" />
         <div className="text-right leading-tight">
-          <p className="text-sm font-medium text-gray-800">
+          <p className="text-sm font-medium text-foreground">
             {user?.username ?? "—"}
           </p>
-          <p className="text-xs text-gray-400">{user?.email ?? ""}</p>
+          <p className="text-xs text-default-400">{user?.email ?? ""}</p>
         </div>
         <Avatar
           name={initials}

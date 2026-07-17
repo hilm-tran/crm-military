@@ -1,7 +1,9 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useQRScan } from "@/hooks/use-qr-scan";
 import { Button, Card, CardBody, Chip, Spinner, Textarea } from "@heroui/react";
+import { Icon } from "@iconify/react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -16,9 +18,27 @@ interface ScanResult {
 }
 
 const STATUS_CONFIG = {
-  DONG_Y: { label: "Đồng ý ra cổng", color: "success" as const, bg: "bg-green-50 border-green-200", icon: "✅" },
-  TU_CHOI: { label: "Từ chối ra cổng", color: "danger" as const, bg: "bg-red-50 border-red-200", icon: "❌" },
-  DANG_XU_LY: { label: "Đang xử lý (chờ duyệt)", color: "warning" as const, bg: "bg-yellow-50 border-yellow-200", icon: "⏳" },
+  DONG_Y: {
+    label: "Đồng ý ra cổng",
+    color: "success" as const,
+    bg: "bg-success-50 border-success-200",
+    iconClass: "text-success-600",
+    icon: "mdi:check-decagram",
+  },
+  TU_CHOI: {
+    label: "Từ chối ra cổng",
+    color: "danger" as const,
+    bg: "bg-danger-50 border-danger-200",
+    iconClass: "text-danger-600",
+    icon: "mdi:close-octagon",
+  },
+  DANG_XU_LY: {
+    label: "Đang xử lý (chờ duyệt)",
+    color: "warning" as const,
+    bg: "bg-warning-50 border-warning-200",
+    iconClass: "text-warning-600",
+    icon: "mdi:clock-alert-outline",
+  },
 };
 
 const SCANNER_ID = "qr-scanner-container";
@@ -150,27 +170,34 @@ export default function ScanPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold">Kiểm soát cổng — Quét QR</h1>
+      <PageHeader
+        icon="mdi:qrcode-scan"
+        title="Kiểm soát cổng — Quét QR"
+        subtitle="Quét mã QR để xác nhận ra/vào doanh trại"
+      />
 
       {/* Result */}
       {state === "result" && result && (
-        <Card className={`border-2 ${STATUS_CONFIG[result.status]?.bg ?? "bg-gray-50"}`}>
+        <Card className={`border-2 ${STATUS_CONFIG[result.status]?.bg ?? "bg-default-50"}`}>
           <CardBody className="space-y-4 p-6">
             <div className="flex items-center gap-3">
-              <span className="text-4xl">{STATUS_CONFIG[result.status]?.icon ?? "❓"}</span>
+              <Icon
+                icon={STATUS_CONFIG[result.status]?.icon ?? "mdi:help-circle-outline"}
+                className={`text-4xl ${STATUS_CONFIG[result.status]?.iconClass ?? "text-default-400"}`}
+              />
               <div>
                 <Chip size="lg" color={STATUS_CONFIG[result.status]?.color ?? "default"} variant="flat">
                   {STATUS_CONFIG[result.status]?.label ?? result.status}
                 </Chip>
                 {result.name && <p className="mt-1 font-semibold text-lg">{result.name}</p>}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-default-500">
                   {result.type === "MILITARY_PERSONNEL" ? "Quân nhân" : result.type === "CITIZEN" ? "Người dân" : ""}
                 </p>
               </div>
             </div>
 
             {result.reason && (
-              <p className="text-sm text-gray-600 bg-white rounded p-2 border">Lý do: {result.reason}</p>
+              <p className="text-sm text-default-600 bg-content1 rounded p-2 border border-divider">Lý do: {result.reason}</p>
             )}
 
             {result.type === "CITIZEN" && result.status === "DANG_XU_LY" && (
@@ -189,7 +216,7 @@ export default function ScanPage() {
       {state === "scanning" && (
         <Card>
           <CardBody className="p-4 space-y-3">
-            <p className="text-sm text-gray-500 text-center">Đưa mã QR vào khung để quét tự động</p>
+            <p className="text-sm text-default-500 text-center">Đưa mã QR vào khung để quét tự động</p>
             {/* html5-qrcode renders into this div */}
             <div id={SCANNER_ID} className="w-full rounded-lg overflow-hidden" />
             <Button variant="flat" color="danger" className="w-full" onPress={handleReset}>
@@ -204,7 +231,7 @@ export default function ScanPage() {
         <Card>
           <CardBody className="flex flex-col items-center justify-center py-12 gap-4">
             <Spinner size="lg" />
-            <p className="text-gray-500">Đang xử lý...</p>
+            <p className="text-default-500">Đang xử lý...</p>
           </CardBody>
         </Card>
       )}
@@ -212,19 +239,25 @@ export default function ScanPage() {
       {/* Idle */}
       {state === "idle" && (
         <div className="space-y-4">
-          <Button color="primary" size="lg" className="w-full h-16 text-lg" onPress={startScanner}>
-            📷 Bắt đầu quét QR bằng camera
+          <Button
+            color="primary"
+            size="lg"
+            className="w-full h-16 text-lg"
+            onPress={startScanner}
+            startContent={<Icon icon="mdi:camera-outline" className="text-2xl" />}
+          >
+            Bắt đầu quét QR bằng camera
           </Button>
 
           {cameraError && (
-            <p className="text-sm text-red-500 text-center bg-red-50 border border-red-200 rounded p-3">
+            <p className="text-sm text-danger-600 text-center bg-danger-50 border border-danger-200 rounded p-3">
               {cameraError}
             </p>
           )}
 
           <Card>
             <CardBody className="space-y-3">
-              <p className="font-medium text-sm text-gray-600">Hoặc nhập thủ công (JSON từ QR):</p>
+              <p className="font-medium text-sm text-default-600">Hoặc nhập thủ công (JSON từ QR):</p>
               <Textarea
                 placeholder={'{"qrCode":"...","fullName":"Nguyễn Văn A"} hoặc {"citizenId":"...","name":"..."}'}
                 value={manualInput}

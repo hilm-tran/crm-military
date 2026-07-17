@@ -41,53 +41,98 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="flex h-screen items-center justify-center bg-slate-100">
-      <Card className="w-[400px] p-8">
-        <Form className="space-y-4" onSubmit={onSubmit}>
-          <h1 className="text-xl font-bold text-center w-full mb-2">
-            Hệ thống kiểm soát ra vào
+    <div className="flex min-h-screen w-full bg-default-50">
+      {/* Brand panel */}
+      <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-b from-[#20281a] to-[#14170f] p-12 text-white">
+        <div className="absolute inset-0 bg-tactical-grid opacity-60" />
+
+        <div className="relative flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-secondary-400/40 bg-white/5">
+            <Icon icon="mdi:shield-star-outline" className="text-2xl text-secondary-400" />
+          </div>
+          <span className="text-base font-bold tracking-wide">MILITARY MANAGER</span>
+        </div>
+
+        <div className="relative max-w-md">
+          <Icon icon="mdi:shield-check-outline" className="mb-6 text-5xl text-secondary-400" />
+          <h1 className="text-3xl font-bold leading-tight">
+            Hệ thống quản lý &amp; kiểm soát ra vào doanh trại
           </h1>
+          <p className="mt-4 text-sm leading-relaxed text-white/60">
+            Quản lý quân số, phê duyệt nghỉ phép và giám sát ra vào cổng theo thời
+            gian thực — tập trung, minh bạch, đúng phân cấp chỉ huy.
+          </p>
+        </div>
 
-          {errors.root && (
-            <p className="text-danger text-sm text-center">
-              {errors.root.message}
-            </p>
-          )}
+        <p className="relative text-xs text-white/40">
+          © {new Date().getFullYear()} Military Manager. Chỉ dành cho nhân sự được cấp quyền.
+        </p>
+      </div>
 
-          <Input
-            {...register("username", { required: "Vui lòng nhập username" })}
-            errorMessage={errors.username?.message}
-            isInvalid={!!errors.username}
-            label="Username"
-            placeholder="Nhập username"
-          />
+      {/* Form panel */}
+      <div className="flex flex-1 items-center justify-center p-6">
+        <Card className="w-full max-w-[420px] p-8">
+          <div className="mb-6 flex flex-col items-center gap-2 lg:hidden">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-secondary-400/40 bg-primary-900/5">
+              <Icon icon="mdi:shield-star-outline" className="text-2xl text-secondary-500" />
+            </div>
+            <span className="text-sm font-bold tracking-wide text-foreground">
+              MILITARY MANAGER
+            </span>
+          </div>
 
-          <Input
-            {...register("password", { required: "Vui lòng nhập password" })}
-            errorMessage={errors.password?.message}
-            isInvalid={!!errors.password}
-            label="Password"
-            placeholder="Nhập password"
-            type={showPassword ? "text" : "password"}
-            endContent={
-              <Icon
-                icon={showPassword ? "mdi:eye-off" : "mdi:eye"}
-                onClick={() => setShowPassword(!showPassword)}
-                className="cursor-pointer"
-              />
-            }
-          />
+          <Form className="space-y-4" onSubmit={onSubmit}>
+            <div className="w-full mb-2 text-center">
+              <h1 className="text-xl font-bold">Đăng nhập hệ thống</h1>
+              <p className="mt-1 text-sm text-default-500">
+                Hệ thống kiểm soát ra vào
+              </p>
+            </div>
 
-          <Button
-            className="w-full"
-            color="primary"
-            isLoading={isSubmitting}
-            type="submit"
-          >
-            Đăng nhập
-          </Button>
-        </Form>
-      </Card>
+            {errors.root && (
+              <p className="text-danger text-sm text-center w-full">
+                {errors.root.message}
+              </p>
+            )}
+
+            <Input
+              {...register("username", { required: "Vui lòng nhập username" })}
+              errorMessage={errors.username?.message}
+              isInvalid={!!errors.username}
+              label="Số hiệu / Username"
+              placeholder="Nhập username"
+              startContent={<Icon icon="mdi:account-outline" className="text-default-400" />}
+            />
+
+            <Input
+              {...register("password", { required: "Vui lòng nhập password" })}
+              errorMessage={errors.password?.message}
+              isInvalid={!!errors.password}
+              label="Mật khẩu"
+              placeholder="Nhập password"
+              type={showPassword ? "text" : "password"}
+              startContent={<Icon icon="mdi:lock-outline" className="text-default-400" />}
+              endContent={
+                <Icon
+                  icon={showPassword ? "mdi:eye-off" : "mdi:eye"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="cursor-pointer text-default-400"
+                />
+              }
+            />
+
+            <Button
+              className="w-full"
+              color="primary"
+              isLoading={isSubmitting}
+              type="submit"
+              startContent={!isSubmitting && <Icon icon="mdi:login-variant" />}
+            >
+              Đăng nhập
+            </Button>
+          </Form>
+        </Card>
+      </div>
     </div>
   );
 }

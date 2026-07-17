@@ -27,7 +27,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AddSoldierModal } from "./AddSoldierModal";
 
 const QRCodeCell = ({ base64, name, onClick }: { base64: string; name: string; onClick: () => void }) => {
-  if (!base64) return <span className="text-gray-400 text-sm">—</span>;
+  if (!base64) return <span className="text-default-400 text-sm">—</span>;
   return (
     <img
       alt="QR Code"
@@ -257,11 +257,11 @@ export const SoldierTable = () => {
                     src={`data:image/png;base64,${qrSoldier.qrCode}`}
                   />
                 )}
-                <p className="text-xs text-gray-400 font-mono text-center">{qrSoldier?.code}</p>
+                <p className="text-xs text-default-400 font-mono text-center">{qrSoldier?.code}</p>
                 <a
                   href={`data:image/png;base64,${qrSoldier?.qrCode}`}
                   download={`qr-${qrSoldier?.code}.png`}
-                  className="text-sm text-blue-500 hover:underline"
+                  className="text-sm text-primary-600 hover:underline"
                 >
                   Tải xuống QR
                 </a>
@@ -284,7 +284,7 @@ export const SoldierTable = () => {
                   Bạn có chắc chắn muốn xóa{" "}
                   <strong>{selectedSoldier?.fullName}</strong>?
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-default-500">
                   Hành động này không thể hoàn tác.
                 </p>
               </ModalBody>

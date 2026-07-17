@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SubmissionGroup, useSubmission } from "@/hooks/use-submission";
 import {
@@ -148,11 +149,11 @@ function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUser
             <ModalBody className="gap-4">
               {/* Current members */}
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-2">
+                <p className="text-sm font-medium text-default-600 mb-2">
                   Thành viên hiện tại ({group?.userIds?.length ?? 0})
                 </p>
                 {(group?.userIds ?? []).length === 0 ? (
-                  <p className="text-gray-400 text-sm">Chưa có thành viên</p>
+                  <p className="text-default-400 text-sm">Chưa có thành viên</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {(group?.userIds ?? []).map((uid) => (
@@ -232,7 +233,7 @@ function DeleteModal({ isOpen, onOpenChange, target, onSuccess }: DeleteModalPro
             <ModalHeader>Xóa nhóm trình</ModalHeader>
             <ModalBody>
               <p>Bạn có chắc muốn xóa nhóm <strong>{target?.name}</strong>?</p>
-              <p className="text-sm text-orange-500">Lưu ý: không thể xóa nhóm đang được dùng trong luồng trình.</p>
+              <p className="text-sm text-warning-600">Lưu ý: không thể xóa nhóm đang được dùng trong luồng trình.</p>
             </ModalBody>
             <ModalFooter>
               <Button variant="light" onPress={onClose}>Hủy</Button>
@@ -293,6 +294,12 @@ export default function SubmissionGroupsPage() {
 
   return (
     <div className="p-6 space-y-4">
+      <PageHeader
+        icon="mdi:account-multiple-outline"
+        title="Nhóm trình"
+        subtitle="Nhóm người dùng tham gia phê duyệt đơn"
+      />
+
       <div className="flex gap-4 items-center justify-between">
         <Input
           className="max-w-xs"
@@ -303,7 +310,9 @@ export default function SubmissionGroupsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd}>+ Thêm nhóm</Button>
+        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+          Thêm nhóm
+        </Button>
       </div>
 
       <Table
@@ -335,7 +344,7 @@ export default function SubmissionGroupsPage() {
             : groups.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-gray-400 py-8" colSpan={5}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={5}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có nhóm nào"}
                   </TableCell>
                 </TableRow>

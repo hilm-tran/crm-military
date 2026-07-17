@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { MilitaryRegion, useRegion } from "@/hooks/use-region";
 import {
@@ -120,7 +121,7 @@ function RegionFormModal({ isOpen, onOpenChange, editing, onSuccess }: FormModal
                 onValueChange={setDescription}
               />
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Logo (tùy chọn)</label>
+                <label className="text-sm text-default-600 block mb-1">Logo (tùy chọn)</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -237,7 +238,11 @@ export default function RegionsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Quản lý Quân khu</h1>
+      <PageHeader
+        icon="mdi:map-marker-radius-outline"
+        title="Quản lý Quân khu"
+        subtitle="Danh sách các quân khu trong hệ thống"
+      />
 
       <div className="flex gap-4 items-center justify-between">
         <Input
@@ -249,7 +254,9 @@ export default function RegionsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd}>+ Thêm quân khu</Button>
+        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+          Thêm quân khu
+        </Button>
       </div>
 
       <Table
@@ -290,7 +297,7 @@ export default function RegionsPage() {
             : regions.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-gray-400 py-8" colSpan={6}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={6}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có quân khu nào"}
                   </TableCell>
                 </TableRow>
@@ -304,7 +311,7 @@ export default function RegionsPage() {
                     <TableCell>
                       {r.logoUrl
                         ? <img src={r.logoUrl} alt="logo" className="w-10 h-10 object-cover rounded" />
-                        : <span className="text-gray-400 text-sm">—</span>}
+                        : <span className="text-default-400 text-sm">—</span>}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

@@ -10,3 +10,24 @@
     --font-sans: "font", sans-serif;
     --font-mono: "monospace", monospace;
 }
+
+/* Subtle topographic-line texture for brand surfaces (sidebar, login) */
+.bg-tactical-grid {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+/* Slim, low-contrast scrollbar for the nav rail */
+.scrollbar-thin-olive {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+.scrollbar-thin-olive::-webkit-scrollbar {
+    width: 6px;
+}
+.scrollbar-thin-olive::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+}

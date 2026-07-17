@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { LeaveApprovalConfig, useLeaveApprovalConfig } from "@/hooks/use-leave-approval-config";
 import {
@@ -269,6 +270,12 @@ export default function LeaveApprovalConfigsPage() {
 
   return (
     <div className="p-6 space-y-4">
+      <PageHeader
+        icon="mdi:cog-outline"
+        title="Cấu hình phê duyệt"
+        subtitle="Giới hạn số ngày nghỉ tối đa theo chức vụ"
+      />
+
       <div className="flex gap-4 items-center justify-between">
         <Input
           className="max-w-xs"
@@ -279,7 +286,9 @@ export default function LeaveApprovalConfigsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd}>+ Thêm cấu hình</Button>
+        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+          Thêm cấu hình
+        </Button>
       </div>
 
       <Table
@@ -313,7 +322,7 @@ export default function LeaveApprovalConfigsPage() {
             : configs.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-gray-400 py-8" colSpan={7}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={7}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có cấu hình nào"}
                   </TableCell>
                 </TableRow>

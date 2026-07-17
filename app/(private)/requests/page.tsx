@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import {
   LeaveRequest,
   LeaveRequestHistory,
@@ -29,6 +30,7 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { CalendarDate, parseDate } from "@internationalized/date";
+import { Icon } from "@iconify/react";
 import { useCallback, useEffect, useState } from "react";
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
@@ -323,31 +325,31 @@ function DetailModal({ isOpen, onOpenChange, request }: DetailModalProps) {
               {/* Request info */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-gray-500">Thời gian nghỉ:</span>
+                  <span className="text-default-500">Thời gian nghỉ:</span>
                   <p className="font-medium">
                     {formatDate(request.leaveFrom)} → {formatDate(request.leaveTo)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Trạng thái:</span>
+                  <span className="text-default-500">Trạng thái:</span>
                   <div className="mt-1">
                     <StatusChip status={request.status} />
                   </div>
                 </div>
                 <div>
-                  <span className="text-gray-500">Số lần được phép ra:</span>
+                  <span className="text-default-500">Số lần được phép ra:</span>
                   <p className="font-medium">{request.allowedOutCount}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Số lần đã ra:</span>
+                  <span className="text-default-500">Số lần đã ra:</span>
                   <p className="font-medium">{request.usedOutCount ?? 0}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Vòng hiện tại:</span>
+                  <span className="text-default-500">Vòng hiện tại:</span>
                   <p className="font-medium">{request.currentRound}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Người duyệt hiện tại:</span>
+                  <span className="text-default-500">Người duyệt hiện tại:</span>
                   <p className="font-medium">{request.currentAssignee}</p>
                 </div>
               </div>
@@ -362,13 +364,13 @@ function DetailModal({ isOpen, onOpenChange, request }: DetailModalProps) {
                     ))}
                   </div>
                 ) : histories.length === 0 ? (
-                  <p className="text-gray-400 text-sm">Chưa có lịch sử</p>
+                  <p className="text-default-400 text-sm">Chưa có lịch sử</p>
                 ) : (
-                  <div className="relative pl-4 border-l-2 border-gray-200 space-y-4">
+                  <div className="relative pl-4 border-l-2 border-divider space-y-4">
                     {histories.map((h) => (
                       <div key={h.id} className="relative">
-                        <div className="absolute -left-[21px] w-3 h-3 rounded-full bg-gray-300 border-2 border-white" />
-                        <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                        <div className="absolute -left-[21px] w-3 h-3 rounded-full bg-primary-400 border-2 border-content1" />
+                        <div className="bg-default-100 rounded-lg p-3 text-sm">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium">
                               Round {h.round} — {h.assignee}
@@ -376,10 +378,10 @@ function DetailModal({ isOpen, onOpenChange, request }: DetailModalProps) {
                             <StatusChip status={h.status} />
                           </div>
                           {h.reason && (
-                            <p className="text-gray-500 italic">"{h.reason}"</p>
+                            <p className="text-default-500 italic">"{h.reason}"</p>
                           )}
                           {h.createdAt && (
-                            <p className="text-gray-400 text-xs mt-1">
+                            <p className="text-default-400 text-xs mt-1">
                               {new Date(h.createdAt).toLocaleString("vi-VN")}
                             </p>
                           )}
@@ -533,7 +535,7 @@ export default function RequestPage() {
           : pendingRequests.length === 0
             ? (
               <TableRow>
-                <TableCell className="text-center text-gray-400 py-8" colSpan={7}>
+                <TableCell className="text-center text-default-400 py-8" colSpan={7}>
                   Không có đơn chờ duyệt
                 </TableCell>
               </TableRow>
@@ -626,7 +628,7 @@ export default function RequestPage() {
           : myRequests.length === 0
             ? (
               <TableRow>
-                <TableCell className="text-center text-gray-400 py-8" colSpan={6}>
+                <TableCell className="text-center text-default-400 py-8" colSpan={6}>
                   Chưa có đơn nào
                 </TableCell>
               </TableRow>
@@ -683,16 +685,21 @@ export default function RequestPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Quản lý nghỉ phép</h1>
-        <Button color="primary" onPress={createModal.onOpen}>
-          + Tạo đơn nghỉ phép
-        </Button>
-      </div>
+      <PageHeader
+        icon="mdi:file-document-edit-outline"
+        title="Quản lý nghỉ phép"
+        subtitle="Theo dõi, trình và phê duyệt đơn nghỉ phép"
+        action={
+          <Button color="primary" onPress={createModal.onOpen} startContent={<Icon icon="mdi:plus" />}>
+            Tạo đơn nghỉ phép
+          </Button>
+        }
+      />
 
       <Tabs
         selectedKey={tab}
         onSelectionChange={(k) => setTab(k as "my" | "pending")}
+        color="primary"
       >
         <Tab key="pending" title={`Chờ tôi duyệt (${pendingRequests.length})`}>
           <PendingTable />

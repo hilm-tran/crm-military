@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SubmissionFlow, SubmissionFlowGroup, useSubmission } from "@/hooks/use-submission";
 import {
@@ -126,7 +127,7 @@ function FlowFormModal({ isOpen, onOpenChange, editing, groups, onSuccess }: For
                 <div className="space-y-2">
                   {steps.map((step, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
-                      <span className="text-sm text-gray-500 w-8 text-center font-mono">
+                      <span className="text-sm text-default-500 w-8 text-center font-mono">
                         {idx + 1}.
                       </span>
                       <Select
@@ -150,14 +151,14 @@ function FlowFormModal({ isOpen, onOpenChange, editing, groups, onSuccess }: For
                           variant="flat"
                           onPress={() => removeStep(idx)}
                         >
-                          ✕
+                          <Icon icon="mdi:close" />
                         </Button>
                       )}
                     </div>
                   ))}
                 </div>
                 {new Set(steps.map((s) => s.groupId)).size !== steps.length && (
-                  <p className="text-xs text-red-500 mt-1">Không được dùng trùng nhóm trong cùng luồng</p>
+                  <p className="text-xs text-danger mt-1">Không được dùng trùng nhóm trong cùng luồng</p>
                 )}
               </div>
             </ModalBody>
@@ -285,6 +286,12 @@ export default function SubmissionFlowsPage() {
 
   return (
     <div className="p-6 space-y-4">
+      <PageHeader
+        icon="mdi:sitemap-outline"
+        title="Luồng trình"
+        subtitle="Cấu hình luồng phê duyệt nhiều cấp theo nhóm"
+      />
+
       <div className="flex gap-4 items-center justify-between">
         <Input
           className="max-w-xs"
@@ -295,7 +302,9 @@ export default function SubmissionFlowsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd}>+ Thêm luồng</Button>
+        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+          Thêm luồng
+        </Button>
       </div>
 
       <Table
@@ -327,7 +336,7 @@ export default function SubmissionFlowsPage() {
             : flows.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-gray-400 py-8" colSpan={5}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={5}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có luồng nào"}
                   </TableCell>
                 </TableRow>

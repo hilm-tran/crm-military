@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { MilitaryUnit, useUnit } from "@/hooks/use-unit";
 import { useRegion } from "@/hooks/use-region";
@@ -152,7 +153,7 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
                 onValueChange={setDescription}
               />
               <div>
-                <label className="text-sm text-gray-600 block mb-1">Logo (tùy chọn)</label>
+                <label className="text-sm text-default-600 block mb-1">Logo (tùy chọn)</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -282,7 +283,11 @@ export default function UnitsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Quản lý Đơn vị</h1>
+      <PageHeader
+        icon="mdi:office-building-marker-outline"
+        title="Quản lý Đơn vị"
+        subtitle="Danh sách đơn vị trực thuộc các quân khu"
+      />
 
       <div className="flex gap-4 items-center justify-between">
         <Input
@@ -294,7 +299,9 @@ export default function UnitsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd}>+ Thêm đơn vị</Button>
+        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+          Thêm đơn vị
+        </Button>
       </div>
 
       <Table
@@ -336,7 +343,7 @@ export default function UnitsPage() {
             : units.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-gray-400 py-8" colSpan={7}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={7}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có đơn vị nào"}
                   </TableCell>
                 </TableRow>
@@ -351,7 +358,7 @@ export default function UnitsPage() {
                     <TableCell>
                       {u.logoUrl
                         ? <img src={u.logoUrl} alt="logo" className="w-10 h-10 object-cover rounded" />
-                        : <span className="text-gray-400 text-sm">—</span>}
+                        : <span className="text-default-400 text-sm">—</span>}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

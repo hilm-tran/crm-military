@@ -127,7 +127,7 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 {/* Left column */}
                 <div className="space-y-3">
-                  <p className="font-medium text-xs text-gray-500 uppercase">Tài khoản</p>
+                  <p className="font-medium text-xs text-default-500 uppercase">Tài khoản</p>
                   <Input
                     {...register("username", { required: "Bắt buộc" })}
                     errorMessage={errors.username?.message}
@@ -163,7 +163,7 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
                     }
                   />
 
-                  <p className="font-medium text-xs text-gray-500 uppercase pt-2">Thông tin quân nhân</p>
+                  <p className="font-medium text-xs text-default-500 uppercase pt-2">Thông tin quân nhân</p>
                   <Input
                     {...register("fullName", { required: "Bắt buộc" })}
                     errorMessage={errors.fullName?.message}
@@ -257,7 +257,7 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
 
                 {/* Right column - image */}
                 <div className="space-y-2">
-                  <p className="font-medium text-xs text-gray-500 uppercase">Ảnh đại diện</p>
+                  <p className="font-medium text-xs text-default-500 uppercase">Ảnh đại diện</p>
                   <ImageUpload
                     onUploadSuccess={(path) => setValue("imagePath", path)}
                   />

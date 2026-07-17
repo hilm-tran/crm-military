@@ -54,7 +54,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div
-      className="relative w-full aspect-video border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden group"
+      className="relative w-full aspect-video border-2 border-dashed border-default-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden group"
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
       onClick={() => document.getElementById("file-upload")?.click()}
@@ -79,14 +79,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center gap-2 p-4 text-gray-500">
+        <div className="flex flex-col items-center gap-2 p-4 text-default-500">
           <Icon icon="mdi:cloud-upload" className="text-4xl" />
           <p className="text-sm">Kéo thả hoặc nhấn để tải ảnh lên</p>
         </div>
       )}
 
       {isUploading && (
-        <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+        <div className="absolute inset-0 bg-content1/60 flex items-center justify-center">
           <Spinner size="lg" />
         </div>
       )}
