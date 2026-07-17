@@ -26,6 +26,7 @@ export interface LeaveRequest {
   currentAssignee: string;
   allowedOutCount: number;
   usedOutCount?: number;
+  reason?: string;
   createdAt?: string;
   updatedAt?: string;
 }

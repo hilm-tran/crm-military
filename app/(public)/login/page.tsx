@@ -2,18 +2,28 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { navigate } from "@/lib/routes/routes.util";
+import { CookieNames } from "@/types/global.enum";
 import { Button, Card, Form, Input } from "@heroui/react";
 import { Icon } from "@iconify/react";
+import Cookies from "js-cookie";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-export default function LoginPage() {
+function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { signIn } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
+
+  useEffect(() => {
+    if (Cookies.get(CookieNames.Session)) {
+      router.replace(redirect || navigate("/dashboard"));
+    }
+    // Only check once on mount — avoid fighting the just-signed-in redirect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     register,
@@ -32,7 +42,6 @@ export default function LoginPage() {
       await signIn(data);
       // Redirect to the intended page or soldiers
       router.replace(redirect || navigate("/soldiers"));
-      router.refresh(); // Refresh to update middleware state
     } catch (error) {
       setError("root", {
         message: "Số hiệu sĩ quan hoặc mật khẩu không đúng",
@@ -134,5 +143,13 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

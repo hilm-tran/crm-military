@@ -2,6 +2,7 @@
 
 import { PageHeader } from "@/components/PageHeader";
 import { SoldierTable } from "@/components/SoldierTable";
+import { Suspense } from "react";
 
 export default function SoldierPage() {
   return (
@@ -12,7 +13,9 @@ export default function SoldierPage() {
         subtitle="Quản lý hồ sơ và tài khoản quân nhân"
       />
 
-      <SoldierTable />
+      <Suspense fallback={null}>
+        <SoldierTable />
+      </Suspense>
     </div>
   );
 }
