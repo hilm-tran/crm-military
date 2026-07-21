@@ -245,10 +245,20 @@ military-fe/
 ### Medium Priority 🟠
 
 - [ ] Implement permission check API for leave approval
-- [ ] Add audit logging for sensitive operations
+- [ ] Add audit logging for sensitive operations (Nhật ký thao tác)
 - [ ] Add loading skeletons
 - [ ] Optimize image lazy-loading
 - [ ] Add role-based UI rendering
+
+### Roadmap from the initiative doc 🧭
+
+Scope items from *"Thuyết minh sáng kiến — Phần mềm quản lý ra vào doanh trại"* not yet implemented (see [SYSTEM_SPEC.md](./SYSTEM_SPEC.md) → "Planned Modules" and [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) → feature-status matrix):
+
+- [ ] Visitor/guest management (list + entry/exit times); extra actor types (CNV quốc phòng, lao động hợp đồng)
+- [ ] Gate-traffic statistics (day/week/month/unit/subject) + report export — backs the currently-mock Dashboard chart
+- [ ] Scan-log list/history endpoint + search by time/CCCD; repoint `/history`
+- [ ] Portrait photo verification at gate on scan
+- [ ] **Role-based sidebar menu visibility** — 2 account types (personnel vs scanner). ⚠️ Blocked: BE must define a scanner role (e.g. `ROLE_SCANNER`). See [SYSTEM_SPEC.md](./SYSTEM_SPEC.md) → "Account Types & Sidebar Menu Visibility"
 
 ### Low Priority 🟡
 

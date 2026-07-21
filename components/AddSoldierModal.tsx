@@ -162,9 +162,12 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
     >
       <ModalContent>
         {(onClose) => (
-          <form onSubmit={onSubmit}>
+          <form
+            className="flex flex-1 flex-col overflow-hidden"
+            onSubmit={onSubmit}
+          >
             <ModalHeader>Thêm quân nhân mới</ModalHeader>
-            <ModalBody className="gap-4">
+            <ModalBody className="gap-4 min-h-0 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 {/* Left column */}
                 <div className="space-y-3">

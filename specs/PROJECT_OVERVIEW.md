@@ -14,6 +14,22 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 
 ---
 
+## 📜 Bối Cảnh & Mục Tiêu (theo Thuyết minh sáng kiến)
+
+> Nguồn: *"Thuyết minh sáng kiến — Phần mềm quản lý ra vào doanh trại"*, Tiểu đoàn 5, Trường Sĩ quan Lục quân 1 (Hà Nội, 2026). Tác giả: Trung sĩ Trịnh Tuấn Tú.
+
+**Vấn đề:** Quản lý người & phương tiện ra vào doanh trại đang làm **thủ công bằng sổ sách** → chậm, dễ sai sót, khó tra cứu/thống kê, không đồng bộ, không đáp ứng chuyển đổi số.
+
+**Mục tiêu:** Số hóa toàn bộ quy trình đăng ký — kiểm soát — lưu trữ — tra cứu ra vào; tự động tạo/kiểm mã QR; thống kê, xuất báo cáo phục vụ chỉ huy; bảo đảm an ninh, an toàn doanh trại.
+
+**Đối tượng quản lý (theo sáng kiến):** quân nhân, **công nhân viên chức quốc phòng, người lao động hợp đồng, khách đến liên hệ công tác (công dân)**, và phương tiện.
+
+**Phần cứng & triển khai:** máy quét QR đầu cuối tại cổng (kết nối USB/Bluetooth); mô hình dữ liệu tập trung trên máy chủ, máy trạm truy cập qua **mạng LAN/Wifi nội bộ**. Quy mô áp dụng: tiểu đoàn → trung đoàn → nhà trường → toàn quân. Giá thành tham chiếu: phần mềm 10.000.000đ + máy quét QR 400.000đ/cổng.
+
+> ⚠️ **Lưu ý khác biệt triển khai thực tế:** bản FE hiện tại là **Next.js static export (S3/CloudFront)** gọi backend AWS API Gateway + Lambda, và trang `/scan` quét bằng **camera (`html5-qrcode`)** — khác với mô hình LAN + máy quét USB/Bluetooth trong sáng kiến. Cần thống nhất khi triển khai thực địa.
+
+---
+
 ## 📱 Các Module & Pages
 
 ### 1️⃣ Trang Đăng Nhập (Public)
@@ -218,6 +234,8 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 | - Duyệt đơn        | ✅               | ✅ (own region)  | ✅ (own unit)  | ❌                   |
 | - Tạo đơn của mình | ✅               | ✅               | ✅             | ✅                   |
 
+> **2 loại tài khoản & phân quyền menu (chờ BE định nghĩa role quét):** (1) TK quân nhân — phân quyền theo cấp; (2) TK quét QR — chỉ thấy "Tổng quan". Chi tiết ma trận hiển thị menu + yêu cầu BE định nghĩa `ROLE_SCANNER`/`ROLE_GATE`: xem [SYSTEM_SPEC.md](./SYSTEM_SPEC.md) → "Account Types & Sidebar Menu Visibility".
+
 ---
 
 ## 🎨 UI Layout
@@ -296,6 +314,33 @@ Sidebar được nhóm theo 5 mục:
 - ✅ Support file upload (unit logo, vehicle images)
 
 > Lưu ý: `use-region` đã bị gỡ khỏi FE; `use-combobox` không còn `getRegions`.
+
+---
+
+## 📊 Ma Trận Trạng Thái Tính Năng (Sáng kiến ↔ Hiện trạng)
+
+Đối chiếu các tính năng nêu trong Thuyết minh sáng kiến với hiện trạng code/API (2026-07-21):
+
+| Tính năng (theo sáng kiến) | Trạng thái | Ghi chú |
+| --- | --- | --- |
+| Tự động tạo mã QR định danh quân nhân | ✅ Đã có | QR base64 do backend sinh |
+| Quét QR quân nhân xác nhận ra/vào | ✅ Đã có | `/scan` + `POST /api/qr-scan-logs/scan` |
+| Quét QR/CCCD khách (công dân) | ✅ Đã có | Nhánh `citizen` inline ở `/scan` |
+| Kiểm tra quyền ra vào (đối chiếu đơn nghỉ) | ✅ Đã có | Backend kiểm `allowedOutCount`/ngày |
+| Quản lý hồ sơ quân nhân (cấp bậc, chức vụ, đơn vị) | ✅ Đã có | `/soldiers`, `/add-soldier` |
+| Quản lý phương tiện ra vào | ✅ Đã có | `/vehicles`, 1:1 với quân nhân |
+| Quản lý đơn vị | ✅ Đã có | `/units` |
+| Lưu lịch sử ra vào | 🟠 Một phần | `/history` đang hiển thị đơn chờ duyệt, **chưa** phải log scan; chưa có API list `qr-scan-logs` |
+| Tìm kiếm theo tên/đơn vị/thời gian/CCCD | 🟠 Một phần | Có tìm theo tên/đơn vị; **chưa** lọc theo thời gian/CCCD |
+| **Quản lý danh sách khách + thời gian ra vào** | ❌ Chưa có | Chưa có module/API quản lý khách (chỉ quét inline) |
+| **Thống kê số lượt ra vào (ngày/tuần/tháng/đơn vị/đối tượng)** | ❌ Chưa có | Dashboard đang **mock**; không có API thống kê |
+| **Xuất báo cáo phục vụ chỉ huy** | ❌ Chưa có | Chưa có API/UI export |
+| **Hiển thị ảnh chân dung để đối chiếu khi quét** | ❌ Chưa có | `QRScanLog` không trả `imageUrl` |
+| **Nhật ký thao tác (audit log)** | ❌ Chưa có | Chưa có API/UI |
+| Đối tượng: CNV quốc phòng, lao động hợp đồng | ❌ Chưa có | Mới hỗ trợ quân nhân + công dân |
+| Phân quyền người dùng theo cấp | ✅ Đã có | 5 role, scope theo region/unit |
+
+> Các mục ❌/🟠 là **định hướng/roadmap** — cần backend bổ sung endpoint tương ứng (xem [SYSTEM_SPEC.md](./SYSTEM_SPEC.md) → "Module dự kiến (chưa triển khai)").
 
 ---
 

@@ -211,6 +211,8 @@ Content-Type: application/json
 
 ## Region APIs
 
+> ⚠️ **Not in current deployment (2026-07-21)**: The live Swagger (`/v3/api-docs`) exposes **no** `/api/military-regions` endpoints and no `/api/common/combobox/regions`. Regions are not managed by the FE. The section below is retained for reference only; `regionCode` still appears on units/personnel as a stored field.
+
 ### GET /api/military-regions
 
 **Purpose**: List regions (paginated)
@@ -767,15 +769,7 @@ Content-Type: application/json
 
 ## QR Scan APIs
 
-> **Note**: A `GET /api/qr-scan-logs` list endpoint exists and is wrapped by `useQRScan().getQRScanLogs`. The current `/history` page, however, renders `GET /api/leave-requests/pending` (leave-based ra/vào view) rather than the scan-log list. Scan/approve/reject are used by the `/scan` gate-control page (camera scanning via `html5-qrcode`).
-
-### GET /api/qr-scan-logs
-
-**Purpose**: List scan logs (paginated). Wrapped by `useQRScan().getQRScanLogs`.
-
-**Query Parameters**: `page`, `size`, `keyword`
-
----
+> **Note**: There is **no** `GET /api/qr-scan-logs` list endpoint in the live Swagger (`/v3/api-docs`) — only `scan`, `{id}`, `{id}/approve`, `{id}/reject`. The `useQRScan().getQRScanLogs` helper in `hooks/use-qr-scan.ts` calls `GET /api/qr-scan-logs` but that path does not exist server-side (would 404) — treat it as dead code until the BE adds it. The `/history` page renders `GET /api/leave-requests/pending` instead. Scan/approve/reject are used by the `/scan` gate-control page (camera scanning via `html5-qrcode`).
 
 ### POST /api/qr-scan-logs/scan
 
@@ -906,7 +900,7 @@ Position codes: `CHI_HUY_TRUONG`, `TRUNG_DOAN_TRUONG`, `TIEU_DOAN_TRUONG`, `DAI_
 
 ### GET /api/common/combobox/regions
 
-Returns regions filtered by user role.
+> ⚠️ Not in the live Swagger — this combobox endpoint does not exist in the current deployment and `use-combobox` no longer calls it.
 
 ### GET /api/common/combobox/units?regionCode=QK1
 

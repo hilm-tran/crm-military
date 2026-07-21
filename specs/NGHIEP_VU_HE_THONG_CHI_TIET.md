@@ -13,6 +13,13 @@
 - `ROLE_USER`: người dùng thường, phạm vi cá nhân.
 - `ROLE_MODERATOR`: đã khai báo vai trò, hiện chưa có nghiệp vụ nổi bật riêng.
 
+> ⚠️ **YÊU CẦU BE ĐỊNH NGHĨA — 2 loại tài khoản & phân quyền menu (2026-07-21):**
+> Hệ thống cần phân biệt **2 loại tài khoản**:
+> 1. **Tài khoản quân nhân**: phân quyền theo cấp (SYSTEM_ADMIN / ADMIN_REGION / ADMIN_UNIT / USER).
+> 2. **Tài khoản dùng để quét QR (trực ban tại cổng)**: chỉ thấy phần "Tổng quan" (Dashboard + Quét QR cổng).
+>
+> Hiện **chưa có role riêng** cho tài khoản quét. Đề nghị backend định nghĩa rõ (gợi ý `ROLE_SCANNER` hoặc `ROLE_GATE`, hoặc dùng lại `ROLE_MODERATOR` một cách tường minh) và **trả role này trong `user.roles[]` của API signin** để FE lọc menu. Quy tắc hiển thị menu chi tiết: xem [SYSTEM_SPEC.md](./SYSTEM_SPEC.md) → "Account Types & Sidebar Menu Visibility".
+
 ### 2.2 Đối tượng dữ liệu chính
 - User
 - Quân nhân (`MilitaryPersonnel`)
@@ -296,4 +303,3 @@
 - `POST /api/qr-scan-logs/{id}/approve`
 - `POST /api/qr-scan-logs/{id}/reject`
 - `GET /api/qr-scan-logs/{id}`
-- `GET /api/qr-scan-logs` (page, size, keyword)

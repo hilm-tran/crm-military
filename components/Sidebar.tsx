@@ -5,8 +5,8 @@ import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-import { navigate } from "@/lib/routes/routes.util";
 import { useAuth } from "@/hooks/use-auth";
+import { navigate } from "@/lib/routes/routes.util";
 
 interface NavItem {
   href: string;
@@ -38,7 +38,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
-    title: "Nghỉ phép",
+    title: "Yêu cầu ra ngoài",
     items: [
       {
         href: "/requests",

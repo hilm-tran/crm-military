@@ -481,9 +481,9 @@ interface LeaveApprovalConfig {
 - For military personnel: auto-validate against leave requests
 - For civilians: manual approval workflow (approve/reject on `/scan`)
 - Automatic `usedOutCount` increment on successful scan
-- Log all scans with timestamps and status (`getQRScanLogs` lists them)
+- Log all scans with timestamps and status
 
-> **Note**: `/history` currently renders pending leave requests (`getPendingLeaveRequests`), not the scan-log list. The scan-log list endpoint (`GET /api/qr-scan-logs`) is wrapped by `getQRScanLogs` and available for future use.
+> **Note**: `/history` currently renders pending leave requests (`getPendingLeaveRequests`), not scan logs. There is **no** `GET /api/qr-scan-logs` list endpoint in the live Swagger; `getQRScanLogs` in `use-qr-scan.ts` targets a non-existent path (dead code, would 404) until the BE adds it.
 
 **Scan Validation Logic (Military Personnel)**:
 
@@ -508,7 +508,8 @@ When QR scanned:
 - `POST /api/qr-scan-logs/{id}/approve` - Approve civilian
 - `POST /api/qr-scan-logs/{id}/reject` - Reject civilian
 - `GET /api/qr-scan-logs/{id}` - Get scan details
-- `GET /api/qr-scan-logs?page&size&keyword` - List scan logs
+
+> No list endpoint (`GET /api/qr-scan-logs`) exists in the live API.
 
 **Data Model**:
 
@@ -546,6 +547,41 @@ interface QRScanLog {
 - `GET /api/common/combobox/ranks`
 - `GET /api/common/combobox/positions`
 - `GET /api/common/combobox/units?regionCode=...`
+
+---
+
+## Planned Modules (not yet implemented)
+
+Derived from the initiative document *"Thuyết minh sáng kiến — Phần mềm quản lý ra vào doanh trại"* (Tiểu đoàn 5, Trường SQ Lục quân 1, 2026). These are in-scope for the product but have **no backend endpoint or FE screen yet** (verified against live Swagger `/v3/api-docs`, 2026-07-21). Listed here so the spec reflects full intended scope, clearly marked as roadmap.
+
+### P1. Visitor / Guest Management (Quản lý khách)
+
+- Manage a list of visitors (công dân/khách liên hệ công tác) with entry/exit timestamps, not just the inline citizen branch of `/scan`.
+- Extend actor types to **công nhân viên chức quốc phòng** and **người lao động hợp đồng**.
+- Needs: `GET/POST /api/visitors` (or reuse a `qr-scan-logs` list with `scanType=CITIZEN`), plus a `/visitors` page.
+
+### P2. Statistics & Reports (Thống kê & báo cáo)
+
+- Gate-traffic statistics by day / week / month / unit / subject; export reports for command staff.
+- Powers the Dashboard chart + "trong/ngoài doanh trại" card (currently **mock** — no data source).
+- Needs (suggested): `GET /api/statistics/gate-traffic?period=&unitCode=`, `GET /api/statistics/barracks`, and a report-export endpoint.
+
+### P3. Scan-Log History & Search (Lịch sử & tra cứu)
+
+- A real entry/exit **log list** with filters by name / unit / time / CCCD.
+- Requires a `GET /api/qr-scan-logs` list endpoint (does not exist today; `getQRScanLogs` currently targets a non-existent path). Once available, repoint `/history` to it instead of pending leave requests.
+
+### P4. Portrait Verification at Gate (Đối chiếu ảnh chân dung)
+
+- On scan, display the person's portrait photo for the duty officer to visually confirm identity.
+- Requires the scan response (`QRScanLog`) to include the personnel `imageUrl` (not present today).
+
+### P5. Audit Log (Nhật ký thao tác)
+
+- Operation/audit logging of sensitive actions (account management, approvals, deletions).
+- Needs a backend audit endpoint + an admin log view.
+
+> Hardware/deployment note from the initiative: gate uses a dedicated USB/Bluetooth QR scanner on a LAN/on-prem server. The current FE is a static export talking to AWS API Gateway and scans via device camera (`html5-qrcode`) — reconcile before field deployment.
 
 ---
 
@@ -661,6 +697,41 @@ MODERATOR (tính năng chưa rõ)
 | Create units       | ✅           | ✅              | ❌            | ❌                   |
 | Approve leaves     | ✅           | ✅ (own region) | ✅ (own unit) | ❌                   |
 | Create own leave   | ✅           | ✅              | ✅            | ✅                   |
+
+---
+
+## Account Types & Sidebar Menu Visibility
+
+There are **two kinds of account**:
+
+1. **Personnel account (quân nhân)** — permissions scoped by rank/level (SYSTEM_ADMIN / ADMIN_REGION / ADMIN_UNIT / USER) as in the Permission Matrix above.
+2. **Scanner account (tài khoản quét QR)** — a gate/duty-officer login used only to scan QR at the gate; it should see **only the "Tổng quan" section**.
+
+### Menu visibility rules
+
+| Sidebar item | Admin¹ | Normal user (ROLE_USER) | Scanner account |
+| --- | :---: | :---: | :---: |
+| Tổng quan · Dashboard (`/dashboard`) | ✅ | ✅ | ✅ |
+| Tổng quan · Quét QR cổng (`/scan`) | ✅ | ❌ | ✅ |
+| Quân nhân · Danh sách (`/soldiers`), Phương tiện (`/vehicles`) | ✅ | ✅ | ❌ |
+| Nghỉ phép · Đơn nghỉ phép (`/requests`) | ✅ | ✅ | ❌ |
+| Lịch sử · Lịch sử ra vào (`/history`) | ✅ | ✅ | ❌ |
+| Cấu hình hệ thống (`/units`, `/submission-groups`, `/submission-flows`, `/leave-approval-configs`) | ✅ | ❌ | ❌ |
+
+¹ Admin = `ROLE_SYSTEM_ADMIN` ∪ `ROLE_ADMIN_REGION` ∪ `ROLE_ADMIN_UNIT`.
+
+Summary:
+- **Scanner** → only the *Tổng quan* section (Dashboard + Quét QR cổng).
+- **Normal user** → everything **except** the *Quét QR cổng* item and the whole *Cấu hình hệ thống* group.
+- **Admin** → everything.
+
+### ⚠️ BE ACTION REQUIRED — define the scanner role
+
+There is currently **no dedicated role** for the scanner account in the backend (live Swagger `/v3/api-docs` references only `ROLE_USER`; the known set is SYSTEM_ADMIN / ADMIN_REGION / ADMIN_UNIT / USER / MODERATOR, and `ROLE_MODERATOR` is unused/"dự bị").
+
+**Backend must define and return a clear role for scanner accounts** (suggested: `ROLE_SCANNER` or `ROLE_GATE`, or repurpose `ROLE_MODERATOR` explicitly) so the FE can distinguish a scanner login from a normal `ROLE_USER`. The role must appear in the signin response `user.roles[]` (the FE reads roles from the session cookie — see `components/Header.tsx` `getSession()`).
+
+Until this role is defined, the FE **cannot reliably implement** the scanner-only view — the menu-visibility logic in `components/Sidebar.tsx` is blocked on this decision. FE plan once defined: attach an allowed-roles predicate per nav item/group and filter `NAV_GROUPS` by the current user's roles.
 
 ---
 
