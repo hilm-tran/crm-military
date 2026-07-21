@@ -1,6 +1,7 @@
-import { apiClient } from "@/lib/api-client";
 import { addToast } from "@heroui/toast";
 import { useCallback, useMemo } from "react";
+
+import { apiClient } from "@/lib/api-client";
 
 // SubmissionGroup Types
 export interface SubmissionGroup {
@@ -48,6 +49,12 @@ export interface CreateSubmissionFlowParams {
 export interface UpdateSubmissionFlowParams extends CreateSubmissionFlowParams {
   id: string;
 }
+
+/** Accept a single id or a list; the API always expects `userIds: number[]`. */
+export type UserIdInput = string | number | Array<string | number>;
+
+const toUserIds = (input: UserIdInput): number[] =>
+  (Array.isArray(input) ? input : [input]).map(Number);
 
 export const useSubmission = () => {
   // SubmissionGroup Operations
@@ -142,11 +149,11 @@ export const useSubmission = () => {
   }, []);
 
   const addUserToGroup = useCallback(
-    async (groupId: string, userId: string) => {
+    async (groupId: string, userIds: UserIdInput) => {
       try {
         const result = await apiClient.post(
           `/api/submission-groups/${groupId}/users`,
-          { userIds: [Number(userId)] },
+          { userIds: toUserIds(userIds) },
         );
 
         addToast({
@@ -170,15 +177,12 @@ export const useSubmission = () => {
   );
 
   const removeUserFromGroup = useCallback(
-    async (groupId: string, userId: string) => {
+    async (groupId: string, userIds: UserIdInput) => {
       try {
-        await apiClient.fetch(
-          `/api/submission-groups/${groupId}/users`,
-          {
-            method: "DELETE",
-            body: JSON.stringify({ userIds: [Number(userId)] }),
-          },
-        );
+        await apiClient.fetch(`/api/submission-groups/${groupId}/users`, {
+          method: "DELETE",
+          body: JSON.stringify({ userIds: toUserIds(userIds) }),
+        });
 
         addToast({
           title: "Thành công",
