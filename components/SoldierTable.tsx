@@ -1,8 +1,5 @@
 "use client";
 
-import { useDebounce } from "@/hooks/use-debounce";
-import { useCombobox } from "@/hooks/use-combobox";
-import { Soldier, useSoldier } from "@/hooks/use-soldier";
 import {
   Button,
   Input,
@@ -24,17 +21,32 @@ import {
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { AddSoldierModal } from "./AddSoldierModal";
 
-const QRCodeCell = ({ base64, name, onClick }: { base64: string; name: string; onClick: () => void }) => {
+import { AddSoldierModal } from "./AddSoldierModal";
+import { SoldierVehicleModal } from "./SoldierVehicleModal";
+
+import { Soldier, useSoldier } from "@/hooks/use-soldier";
+import { useCombobox } from "@/hooks/use-combobox";
+import { useDebounce } from "@/hooks/use-debounce";
+
+const QRCodeCell = ({
+  base64,
+  name,
+  onClick,
+}: {
+  base64: string;
+  name: string;
+  onClick: () => void;
+}) => {
   if (!base64) return <span className="text-default-400 text-sm">—</span>;
+
   return (
     <img
       alt="QR Code"
       className="w-16 h-16 border rounded bg-white cursor-pointer hover:opacity-80 transition-opacity"
       src={`data:image/png;base64,${base64}`}
-      onClick={onClick}
       title={`Phóng to QR - ${name}`}
+      onClick={onClick}
     />
   );
 };
@@ -49,15 +61,28 @@ export const SoldierTable = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getRanks, getPositions } = useCombobox();
-  const { isOpen: isQROpen, onOpen: onQROpen, onOpenChange: onQROpenChange } = useDisclosure();
+  const {
+    isOpen: isQROpen,
+    onOpen: onQROpen,
+    onOpenChange: onQROpenChange,
+  } = useDisclosure();
   const [qrSoldier, setQrSoldier] = useState<Soldier | null>(null);
+  const {
+    isOpen: isVehicleModalOpen,
+    onOpen: onVehicleModalOpen,
+    onOpenChange: onVehicleModalOpenChange,
+  } = useDisclosure();
+  const [selectedVehicleSoldier, setSelectedVehicleSoldier] =
+    useState<Soldier | null>(null);
   const [rankMap, setRankMap] = useState<Record<string, string>>({});
   const [positionMap, setPositionMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     Promise.all([getRanks(), getPositions()]).then(([ranks, positions]) => {
       setRankMap(Object.fromEntries(ranks.map((r) => [r.code, r.name])));
-      setPositionMap(Object.fromEntries(positions.map((p) => [p.code, p.name])));
+      setPositionMap(
+        Object.fromEntries(positions.map((p) => [p.code, p.name])),
+      );
     });
   }, [getRanks, getPositions]);
   // Keyword state for the input
@@ -100,6 +125,7 @@ export const SoldierTable = () => {
         size,
         keyword,
       });
+
       setData(response.data.content);
       setTotalPages(response.data.totalPages);
     } catch (error) {
@@ -115,6 +141,7 @@ export const SoldierTable = () => {
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", newPage.toString());
     router.push(`?${params.toString()}`);
   };
@@ -144,21 +171,21 @@ export const SoldierTable = () => {
     <>
       <div className="flex gap-4 items-center justify-between">
         <Input
+          isClearable
           className="max-w-xs"
           placeholder="Tìm kiếm theo tên, số hiệu..."
-          value={keyword}
-          onValueChange={setKeyword}
           startContent={
-            <Icon icon="mdi:magnify" className="text-default-400" />
+            <Icon className="text-default-400" icon="mdi:magnify" />
           }
-          isClearable
+          value={keyword}
           onClear={() => setKeyword("")}
+          onValueChange={setKeyword}
         />
 
         <Button
           color="primary"
-          onPress={onOpen}
           startContent={<Icon icon="mdi:plus" />}
+          onPress={onOpen}
         >
           Thêm
         </Button>
@@ -194,10 +221,10 @@ export const SoldierTable = () => {
             <TableColumn align="center">HÀNH ĐỘNG</TableColumn>
           </TableHeader>
           <TableBody
+            emptyContent={!isLoading && "Không tìm thấy quân nhân nào"}
+            isLoading={isLoading}
             items={data}
             loadingContent={<Spinner />}
-            isLoading={isLoading}
-            emptyContent={!isLoading && "Không tìm thấy quân nhân nào"}
           >
             {(item) => (
               <TableRow key={item.id}>
@@ -207,22 +234,47 @@ export const SoldierTable = () => {
                 <TableCell>{item.fullName}</TableCell>
                 <TableCell className="font-mono text-xs">{item.code}</TableCell>
                 <TableCell>{item.unitCode ?? "—"}</TableCell>
-                <TableCell>{item.rankCode ? (rankMap[item.rankCode] ?? item.rankCode) : "—"}</TableCell>
-                <TableCell>{item.positionCode ? (positionMap[item.positionCode] ?? item.positionCode) : "—"}</TableCell>
+                <TableCell>
+                  {item.rankCode
+                    ? (rankMap[item.rankCode] ?? item.rankCode)
+                    : "—"}
+                </TableCell>
+                <TableCell>
+                  {item.positionCode
+                    ? (positionMap[item.positionCode] ?? item.positionCode)
+                    : "—"}
+                </TableCell>
                 <TableCell>
                   <QRCodeCell
                     base64={item.qrCode}
                     name={item.fullName}
-                    onClick={() => { setQrSoldier(item); onQROpen(); }}
+                    onClick={() => {
+                      setQrSoldier(item);
+                      onQROpen();
+                    }}
                   />
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-center gap-2">
                     <Button
                       isIconOnly
+                      aria-label="Phương tiện"
+                      color={item.vehicle ? "primary" : "default"}
+                      size="sm"
+                      title="Phương tiện"
+                      variant="flat"
+                      onPress={() => {
+                        setSelectedVehicleSoldier(item);
+                        onVehicleModalOpen();
+                      }}
+                    >
+                      <Icon icon="mdi:car-outline" />
+                    </Button>
+                    <Button
+                      isIconOnly
+                      color="danger"
                       size="sm"
                       variant="flat"
-                      color="danger"
                       onPress={() => handleDeleteClick(item)}
                     >
                       <Icon icon="mdi:trash" />
@@ -243,8 +295,15 @@ export const SoldierTable = () => {
         }}
       />
 
+      <SoldierVehicleModal
+        isOpen={isVehicleModalOpen}
+        soldier={selectedVehicleSoldier}
+        onOpenChange={onVehicleModalOpenChange}
+        onSuccess={fetchSoldiers}
+      />
+
       {/* QR Zoom Modal */}
-      <Modal isOpen={isQROpen} onOpenChange={onQROpenChange} size="md">
+      <Modal isOpen={isQROpen} size="md" onOpenChange={onQROpenChange}>
         <ModalContent>
           {(onClose) => (
             <>
@@ -257,11 +316,13 @@ export const SoldierTable = () => {
                     src={`data:image/png;base64,${qrSoldier.qrCode}`}
                   />
                 )}
-                <p className="text-xs text-default-400 font-mono text-center">{qrSoldier?.code}</p>
+                <p className="text-xs text-default-400 font-mono text-center">
+                  {qrSoldier?.code}
+                </p>
                 <a
-                  href={`data:image/png;base64,${qrSoldier?.qrCode}`}
-                  download={`qr-${qrSoldier?.code}.png`}
                   className="text-sm text-primary-600 hover:underline"
+                  download={`qr-${qrSoldier?.code}.png`}
+                  href={`data:image/png;base64,${qrSoldier?.qrCode}`}
                 >
                   Tải xuống QR
                 </a>
@@ -294,8 +355,8 @@ export const SoldierTable = () => {
                 </Button>
                 <Button
                   color="danger"
-                  onPress={handleDeleteConfirm}
                   isLoading={isDeleting}
+                  onPress={handleDeleteConfirm}
                 >
                   Xóa
                 </Button>

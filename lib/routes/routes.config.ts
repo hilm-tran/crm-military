@@ -35,6 +35,12 @@ export const routes = {
     pattern: "/soldiers",
     private: true,
   },
+  "/vehicles": {
+    router: "/vehicles",
+    filePath: "(private)/vehicles",
+    pattern: "/vehicles",
+    private: true,
+  },
   "/scan": {
     router: "/scan",
     filePath: "(private)/scan",
@@ -75,6 +81,7 @@ export const routeKeys = [
   "/history",
   "/requests",
   "/soldiers",
+  "/vehicles",
   "/scan",
   "/units",
   "/submission-groups",
@@ -90,6 +97,7 @@ export const routePatterns = [
   "/history",
   "/requests",
   "/soldiers",
+  "/vehicles",
   "/scan",
   "/units",
   "/submission-groups",

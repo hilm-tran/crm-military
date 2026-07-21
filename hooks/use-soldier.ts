@@ -1,6 +1,9 @@
-import { apiClient } from "@/lib/api-client";
 import { addToast } from "@heroui/toast";
 import { useCallback, useMemo } from "react";
+
+import { apiClient } from "@/lib/api-client";
+import { VehicleRequestPayload, VehicleResponse } from "@/hooks/use-vehicle";
+import { PaginatedResponse } from "@/types/api";
 
 export interface Soldier {
   id: number;
@@ -12,19 +15,7 @@ export interface Soldier {
   qrCode: string; // base64 PNG image
   qrSource: string;
   imageUrl: string | null;
-}
-
-export interface PaginatedResponse<T> {
-  data: {
-    totalPages: number;
-    totalElements: number;
-    size: number;
-    number: number;
-    content: T[];
-    first: boolean;
-    last: boolean;
-    empty: boolean;
-  };
+  vehicle?: VehicleResponse | null;
 }
 
 export interface CreateSoldierParams {
@@ -38,6 +29,7 @@ export interface CreateSoldierParams {
     unitCode: string;
     positionCode: string;
     imagePath?: string;
+    vehicle?: VehicleRequestPayload;
   };
 }
 
@@ -67,12 +59,16 @@ export const useSoldier = () => {
   const uploadImage = useCallback(async (file: File) => {
     try {
       const formData = new FormData();
+
       formData.append("multipartFile", file);
 
-      const result = await apiClient.fetch("/api/common/upload-image?category=personnel", {
-        method: "POST",
-        body: formData,
-      });
+      const result = await apiClient.fetch(
+        "/api/common/upload-image?category=personnel",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       addToast({
         title: "Thành công",
