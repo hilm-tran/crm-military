@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
+import { navigate } from "@/lib/routes/routes.util";
 import { Button } from "@heroui/button";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
@@ -56,7 +57,7 @@ export default function Sidebar() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.refresh();
+    router.replace(navigate("/login"));
   };
 
   return (

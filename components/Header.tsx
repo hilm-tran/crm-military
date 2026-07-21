@@ -33,7 +33,10 @@ function getSession() {
     return JSON.parse(raw) as {
       token: string;
       type: string;
-      user?: { id: string; username: string; email: string; roles: string[] };
+      id: string;
+      username: string;
+      email: string;
+      roles: string[];
     };
   } catch {
     return null;
@@ -45,7 +48,7 @@ export default function Header() {
 
   const [session, setSession] = useState<ReturnType<typeof getSession>>(null);
   useEffect(() => { setSession(getSession()); }, []);
-  const user = session?.user;
+  const user = session;
   const primaryRole = user?.roles?.[0];
   const roleConfig = primaryRole ? ROLE_LABEL[primaryRole] : null;
   const pageTitle = PAGE_TITLES[pathname] ?? "Military Manager";

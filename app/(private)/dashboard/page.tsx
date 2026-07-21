@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
         const pendingLeaveRequests =
           pendingRes.status === "fulfilled"
-            ? ((pendingRes.value as any)?.data ?? []).length
+            ? (pendingRes.value as any)?.data?.totalElements ?? 0
             : 0;
 
         setStats({ totalSoldiers, pendingLeaveRequests });
