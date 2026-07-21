@@ -1,7 +1,7 @@
 # Military Manager - API Integration Specification
 
-**Version:** 2.1  
-**Last Updated:** 2026-04-22  
+**Version:** 2.2  
+**Last Updated:** 2026-07-21  
 **Swagger:** https://xgour62062.execute-api.ap-southeast-2.amazonaws.com/swagger-ui/index.html
 
 ---
@@ -112,10 +112,19 @@ Content-Type: application/json
     "rankCode": "DAI_UY",
     "unitCode": "DV001",
     "positionCode": "TRUNG_DOI_TRUONG",
-    "imagePath": "string (optional)"
+    "imagePath": "string (optional)",
+    "vehicle": {
+      "vehicleType": "CAR | MOTORBIKE | OTHER",
+      "brand": "string",
+      "model": "string",
+      "licensePlate": "string",
+      "imagePaths": ["vehicle-image-1.jpg"]
+    }
   }
 }
 ```
+
+> **Note**: `militaryPersonnel.vehicle` is optional. When present, the vehicle is created atomically together with the personnel (see [Vehicle APIs](#vehicle-apis)). The FE exposes this via a switch-gated section in the "Thêm quân nhân" modal.
 
 ---
 
@@ -146,9 +155,20 @@ Content-Type: application/json
   "code": "DV001-DAI-UY-TRUNG-DOI-TRUONG-00001",
   "qrCode": "iVBORw0KGgo... (base64 PNG)",
   "qrSource": "SYSTEM",
-  "imageUrl": "/api/common/images/personnel/xxx.jpg"
+  "imageUrl": "/api/common/images/personnel/xxx.jpg",
+  "vehicle": {
+    "id": 123,
+    "personnelId": 7732553894324217,
+    "vehicleType": "CAR",
+    "brand": "Toyota",
+    "model": "Vios",
+    "licensePlate": "51A-12345",
+    "imageUrls": ["/api/common/images/vehicle/xxx.jpg"]
+  }
 }
 ```
+
+> **Note**: Every personnel list/detail row carries a nested `vehicle` object (`VehicleResponse | null`). The soldiers table reads it directly — no extra fetch needed to show a soldier's vehicle.
 
 ---
 
@@ -310,6 +330,82 @@ Content-Type: application/json
 ### DELETE /api/military-units/{id}
 
 **Purpose**: Delete unit
+
+---
+
+## Vehicle APIs
+
+> Feature added 2026-07-21 (BE commit `7db938c9`). A `Vehicle` is 1:1 with a `MilitaryPersonnel`. FE hook: `hooks/use-vehicle.ts`. Images are uploaded beforehand via `POST /api/common/upload-image?category=vehicle`, then referenced by filename in `imagePaths`.
+
+### POST /api/vehicles?personnelId={id}
+
+**Purpose**: Attach (create) a vehicle for a personnel
+
+**Request** (`VehicleRequest`):
+
+```json
+{
+  "vehicleType": "CAR | MOTORBIKE | OTHER",
+  "brand": "string (required, max 100)",
+  "model": "string (required, max 100)",
+  "licensePlate": "string (required, max 20)",
+  "imagePaths": ["filename.jpg (max 10 items)"]
+}
+```
+
+**Response** (`VehicleResponse`): adds `id`, `personnelId`, and `imageUrls` (server-relative paths under `/api/common/images/vehicle/{filename}`).
+
+> **Errors**: `MIL00054` — a vehicle already exists for that personnel (1:1 constraint).
+
+---
+
+### GET /api/vehicles
+
+**Purpose**: List vehicles (paginated)
+
+**Query Parameters**: `page`, `size`, `keyword` (matches license plate / brand / model)
+
+**Response item**: `VehicleResponse` (see above).
+
+---
+
+### GET /api/vehicles/{id}
+
+**Purpose**: Get vehicle details
+
+---
+
+### GET /api/vehicles/by-personnel/{personnelId}
+
+**Purpose**: Get a personnel's vehicle by owner id
+
+> Returns `404 VEHICLE_NOT_FOUND` (`MIL00050`) if the personnel has no vehicle.
+
+---
+
+### PUT /api/vehicles/{id}
+
+**Purpose**: Update a vehicle
+
+**Request**: same as `VehicleRequest`. Does **not** accept `personnelId` reassignment.
+
+---
+
+### DELETE /api/vehicles/{id}/images?imagePath={filename}
+
+**Purpose**: Delete a single vehicle image
+
+> The FE `VehicleImagesUpload` calls this immediately when a saved image is removed while editing a persisted vehicle.
+
+---
+
+### DELETE /api/vehicles/{id}
+
+**Purpose**: Delete a vehicle and all its images
+
+---
+
+> **Error codes** `MIL00050`–`MIL00054` (not found, image not found / save failed / delete failed, already-exists-for-personnel) surface through the generic `apiClient` error toast — no special-case handling on the FE.
 
 ---
 
@@ -671,11 +767,19 @@ Content-Type: application/json
 
 ## QR Scan APIs
 
-> **Note**: No `GET /api/qr-scan-logs` list endpoint exists on Swagger. The `/history` page uses `GET /api/leave-requests/pending` instead. QR scan endpoints are only used by the `/scan` page for gate control.
+> **Note**: A `GET /api/qr-scan-logs` list endpoint exists and is wrapped by `useQRScan().getQRScanLogs`. The current `/history` page, however, renders `GET /api/leave-requests/pending` (leave-based ra/vào view) rather than the scan-log list. Scan/approve/reject are used by the `/scan` gate-control page (camera scanning via `html5-qrcode`).
+
+### GET /api/qr-scan-logs
+
+**Purpose**: List scan logs (paginated). Wrapped by `useQRScan().getQRScanLogs`.
+
+**Query Parameters**: `page`, `size`, `keyword`
+
+---
 
 ### POST /api/qr-scan-logs/scan
 
-**Purpose**: Process QR scan at gate. Used by `/scan` page only.
+**Purpose**: Process QR scan at gate. Used by the `/scan` page.
 
 **Request**:
 
@@ -759,9 +863,11 @@ Or for civilian:
 
 ## Common/Upload APIs
 
-### POST /api/common/upload-image
+### POST /api/common/upload-image?category={category}
 
-**Purpose**: Upload image to S3 (personnel photo, region/unit logo)
+**Purpose**: Upload image to S3. Single unified endpoint used for all image kinds.
+
+**Query Parameter**: `category` — one of `personnel`, `region`, `unit`, `vehicle`
 
 **Content-Type**: `multipart/form-data`
 
@@ -779,7 +885,10 @@ Or for civilian:
 /api/common/images/personnel/xxx.jpg
 /api/common/images/region/xxx.png
 /api/common/images/unit/xxx.jpg
+/api/common/images/vehicle/xxx.jpg
 ```
+
+> **Note**: These paths are server-relative. Since the FE is a static export with no `/api/*` proxy, they must be prefixed with `NEXT_PUBLIC_BASE_API` to resolve — see `lib/image-url.ts`.
 
 ---
 

@@ -16,6 +16,7 @@
 ### 2.2 Đối tượng dữ liệu chính
 - User
 - Quân nhân (`MilitaryPersonnel`)
+- Phương tiện (`Vehicle`) — 1:1 với quân nhân, bảng `military_vehicles` (bổ sung 2026-07-21, BE commit `7db938c9`)
 - Quân khu (`MilitaryRegion`)
 - Đơn vị (`MilitaryUnit`)
 - Nhóm trình (`SubmissionGroup`)
@@ -59,6 +60,14 @@
 - Số đuôi tăng dần theo cùng tổ hợp tiền tố.
 - Mặc định API thêm/sửa quân nhân không nhận `code` và `qrCode` từ FE.
 - Vì vậy toàn bộ QR của quân nhân là QR do hệ thống tự sinh.
+
+### 4.4b Phương tiện (Vehicle) — bổ sung 2026-07-21
+- Mỗi quân nhân có tối đa 1 phương tiện (quan hệ 1:1), lưu ở bảng `military_vehicles`.
+- Trường: `vehicleType` (`CAR`/`MOTORBIKE`/`OTHER`), `brand`, `model`, `licensePlate`, `imagePaths` (≤10 ảnh, upload trước với `category=vehicle`).
+- API: `POST /api/vehicles?personnelId=`, `GET /api/vehicles` (keyword: biển số/hãng/dòng), `GET /api/vehicles/{id}`, `GET /api/vehicles/by-personnel/{personnelId}`, `PUT /api/vehicles/{id}`, `DELETE /api/vehicles/{id}/images?imagePath=`, `DELETE /api/vehicles/{id}`.
+- Có thể tạo phương tiện cùng lúc khi signup qua object `militaryPersonnel.vehicle`.
+- `MilitaryPersonnelResponse` đính kèm `vehicle` (nested, có thể null).
+- Mã lỗi: `MIL00050`–`MIL00054` (không tìm thấy, ảnh không tồn tại / lưu / xóa thất bại, đã tồn tại phương tiện cho quân nhân).
 
 ### 4.4 Phân quyền truy cập quân nhân
 - Quyền xem danh sách/chi tiết:
@@ -212,6 +221,7 @@
 - `military_regions`
 - `military_units`
 - `military_personnel`
+- `military_vehicles`
 - `submission_groups`
 - `submission_flows`
 - `leave_approval_configs`
@@ -238,14 +248,23 @@
 - `POST /api/auth/signout`
 
 ### 14.2 Common
-- `POST /api/common/upload-image`
+- `POST /api/common/upload-image?category=` (`personnel`/`region`/`unit`/`vehicle`)
 - `GET /api/common/images/{category}/{filename}`
-- `GET /api/common/combobox/*`
+- `GET /api/common/combobox/*` (ranks, positions, units — FE không còn dùng `regions`)
 
 ### 14.3 Military
 - `CRUD /api/military-regions`
 - `CRUD /api/military-units`
 - `CRUD /api/personnel`
+
+### 14.3b Vehicle
+- `POST /api/vehicles?personnelId=`
+- `GET /api/vehicles` (page, size, keyword)
+- `GET /api/vehicles/{id}`
+- `GET /api/vehicles/by-personnel/{personnelId}`
+- `PUT /api/vehicles/{id}`
+- `DELETE /api/vehicles/{id}/images?imagePath=`
+- `DELETE /api/vehicles/{id}`
 
 ### 14.4 Submission
 - `CRUD /api/submission-groups`
@@ -277,3 +296,4 @@
 - `POST /api/qr-scan-logs/{id}/approve`
 - `POST /api/qr-scan-logs/{id}/reject`
 - `GET /api/qr-scan-logs/{id}`
+- `GET /api/qr-scan-logs` (page, size, keyword)

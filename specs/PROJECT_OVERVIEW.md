@@ -1,7 +1,7 @@
 # Military Manager - Project Overview & Business Context
 
-**Version:** 1.0  
-**Date:** 2026-04-21  
+**Version:** 1.1  
+**Date:** 2026-07-21  
 **Status:** In Development
 
 ---
@@ -56,9 +56,29 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
   - Username, Email, Password
   - Họ tên, Cấp bậc, Đơn vị, Chức vụ
   - Upload ảnh
+  - **Phương tiện (tuỳ chọn)**: switch bật/tắt section — Loại xe (Ô tô/Xe máy/Khác), Hãng, Dòng, Biển số, ảnh xe (≤10). Tạo cùng lúc với quân nhân.
 - Backend tự sinh:
   - **Code**: `VN_HCMC_SOLDIER_CAPTAIN_0001`
   - **QR**: Mã QR để scan tại cổng
+
+### 4️⃣b Phương Tiện (Vehicle)
+
+- **Quản lý phương tiện cá nhân** (1 quân nhân ↔ tối đa 1 phương tiện):
+  - Trên bảng quân nhân: action "Phương tiện" để xem/tạo/sửa/xoá phương tiện + ảnh của từng quân nhân
+  - Trang độc lập `/vehicles`: tìm kiếm (biển số/hãng/dòng), phân trang, thêm/sửa/xoá theo `personnelId`
+- Ảnh xe upload trước qua `POST /api/common/upload-image?category=vehicle`
+
+### 4️⃣c Quét QR Cổng (Scan)
+
+- Trang `/scan`: dùng camera (`html5-qrcode`) quét QR quân nhân / người dân → gọi `POST /api/qr-scan-logs/scan`
+- Với người dân: admin Duyệt/Từ chối ngay trên trang
+
+### 4️⃣d Cấu Hình Hệ Thống
+
+- `/units` — Đơn vị (CRUD + logo)
+- `/submission-groups` — Nhóm trình (thành viên)
+- `/submission-flows` — Luồng trình (thứ tự nhóm duyệt)
+- `/leave-approval-configs` — Cấu hình phê duyệt nghỉ phép theo chức vụ
 
 ### 5️⃣ Lịch Sử Ra Vào
 
@@ -163,6 +183,7 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 
 👤 Quân Nhân:
 ├─ military_personnel         → Quân nhân (code, qrCode, fullName, imagePath)
+├─ military_vehicles          → Phương tiện 1:1 với quân nhân (vehicleType, brand, model, licensePlate, imagePaths)
 
 📋 Luồng Trình:
 ├─ submission_groups          → Nhóm trình duyệt (users list)
@@ -224,32 +245,47 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 
 ### Menu Sidebar
 
+Sidebar được nhóm theo 5 mục:
+
 ```
-🏠 Dashboard           → /dashboard
-👥 Danh sách quân nhân → /soldiers
-📋 Lịch sử ra vào      → /history
-✉️ Duyệt yêu cầu      → /requests
-➕ Thêm quân nhân      → /add-soldier
+▸ Tổng quan
+  🏠 Dashboard            → /dashboard
+  🔳 Quét QR cổng         → /scan
+▸ Quân nhân
+  🛡️ Danh sách quân nhân  → /soldiers
+  🚗 Phương tiện          → /vehicles
+▸ Nghỉ phép
+  📄 Đơn nghỉ phép        → /requests
+▸ Lịch sử
+  🕘 Lịch sử ra vào       → /history
+▸ Cấu hình hệ thống
+  🏢 Đơn vị               → /units
+  👥 Nhóm trình           → /submission-groups
+  🗺️ Luồng trình          → /submission-flows
+  ⚙️ Cấu hình phê duyệt   → /leave-approval-configs
 [Đăng xuất]
 ```
+
+> Lưu ý: "Thêm quân nhân" giờ là modal/action trên trang `/soldiers` (không còn là mục sidebar riêng). Mục quản lý Quân khu (regions) đã được gỡ khỏi FE.
 
 ---
 
 ## ⚙️ Custom Hooks Hiện Có
 
-Đã tạo 9 custom hooks theo pattern của `use-soldier.ts`:
+Đã tạo 10 custom hooks theo pattern của `use-soldier.ts`:
 
-| **Hook**                    | **Dùng Cho**               | **Các Hàm Chính**                                                                                                   |
-| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `use-auth`                  | Login/Logout               | `signIn`, `signOut`                                                                                                 |
-| `use-soldier`               | CRUD quân nhân, upload ảnh | `createSoldier`, `uploadImage`, `getSoldiers`                                                                       |
-| `use-region`                | CRUD quân khu              | `createRegion`, `updateRegion`, `deleteRegion`, `getRegions`, `uploadLogo`                                          |
-| `use-unit`                  | CRUD đơn vị                | `createUnit`, `updateUnit`, `deleteUnit`, `getUnits`, `uploadLogo`                                                  |
-| `use-submission`            | Nhóm trình & Luồng trình   | `createGroup`, `addUserToGroup`, `createFlow`, `updateFlow`, `deleteFlow`                                           |
-| `use-leave-request`         | Yêu cầu nghỉ phép          | `createLeaveRequest`, `approveLeaveRequest`, `returnLeaveRequest`, `supplementLeaveRequest`, `resubmitLeaveRequest` |
-| `use-leave-approval-config` | Cấu hình phê duyệt         | `createConfig`, `getApplicableConfigs`, `toggleConfigActive`                                                        |
-| `use-qr-scan`               | Quét QR                    | `scanQR`, `approveQRScan`, `rejectQRScan`                                                                           |
-| `use-combobox`              | Dropdown data              | `getRanks`, `getPositions`, `getRegions`, `getUnits`                                                                |
+| **Hook**                    | **Dùng Cho**               | **Các Hàm Chính**                                                                                                                          |
+| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `use-auth`                  | Login/Logout               | `signIn`, `signOut`                                                                                                                        |
+| `use-soldier`               | CRUD quân nhân, upload ảnh | `createSoldier`, `uploadImage`, `getSoldiers`, `deleteSoldier`                                                                             |
+| `use-vehicle`               | CRUD phương tiện           | `attachVehicle`, `updateVehicle`, `getVehicles`, `getVehicleById`, `getVehicleByPersonnelId`, `deleteVehicle`, `deleteVehicleImage`, `uploadVehicleImage` |
+| `use-unit`                  | CRUD đơn vị                | `createUnit`, `updateUnit`, `deleteUnit`, `getUnits`, `getUnitById`, `uploadLogo`                                                          |
+| `use-submission`            | Nhóm trình & Luồng trình   | `createGroup`, `updateGroup`, `deleteGroup`, `getGroups`, `addUserToGroup`, `removeUserFromGroup`, `createFlow`, `updateFlow`, `deleteFlow`, `getFlows`, `getFlowById` |
+| `use-leave-request`         | Yêu cầu nghỉ phép          | `createLeaveRequest`, `getMyLeaveRequests`, `getPendingLeaveRequests`, `acceptLeaveRequest`, `approveLeaveRequest`, `returnLeaveRequest`, `editLeaveRequest`, `resubmitLeaveRequest`, `supplementLeaveRequest`, `submitNextLeaveRequest` |
+| `use-leave-approval-config` | Cấu hình phê duyệt         | `createConfig`, `updateConfig`, `deleteConfig`, `getConfigs`, `getConfigById`, `toggleConfigActive`, `getApplicableConfigs`               |
+| `use-qr-scan`               | Quét QR                    | `scanQR`, `approveQRScan`, `rejectQRScan`, `getQRScanLog`, `getQRScanLogs`                                                                 |
+| `use-combobox`              | Dropdown data              | `getRanks`, `getPositions`, `getUnits`                                                                                                     |
+| `use-debounce`              | Debounce input             | (utility hook)                                                                                                                             |
 
 **Đặc điểm chung:**
 
@@ -257,7 +293,9 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 - ✅ Error handling & toast notifications
 - ✅ useCallback + useMemo tối ưu
 - ✅ Consistent pattern
-- ✅ Support file upload (region, unit logo)
+- ✅ Support file upload (unit logo, vehicle images)
+
+> Lưu ý: `use-region` đã bị gỡ khỏi FE; `use-combobox` không còn `getRegions`.
 
 ---
 
@@ -268,6 +306,7 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 ### Core Features
 
 - ✅ **Quản lý quân nhân** + QR tự sinh
+- ✅ **Quản lý phương tiện** (1:1 với quân nhân, nhiều ảnh)
 - ✅ **Luồng duyệt nghỉ phép** theo phân cấp (Unit → Region → System)
 - ✅ **Quét QR tự động** kiểm tra quyền ra cổng
 - ✅ **Hỗ trợ bổ sung** đơn (tăng round)
@@ -370,5 +409,5 @@ specs/
 ---
 
 **Project Status**: ✅ Fully Documented  
-**Last Updated**: 2026-04-21  
+**Last Updated**: 2026-07-21  
 **Ready for Development**: YES ✅

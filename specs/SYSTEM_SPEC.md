@@ -1,7 +1,7 @@
 # Military Manager - Frontend System Specification
 
-**Version:** 1.0  
-**Last Updated:** 2026-04-21  
+**Version:** 1.1  
+**Last Updated:** 2026-07-21  
 **Status:** In Development
 
 ---
@@ -50,12 +50,12 @@
 ### Tech Stack
 
 ```
-Frontend: Next.js 14 (App Router)
-UI Library: HeroUI + Tailwind CSS
+Frontend: Next.js 15 (App Router, Turbopack dev)
+UI Library: HeroUI 2.8 + Tailwind CSS 4
 State Management: React Hooks (useCallback, useMemo)
-HTTP Client: Custom apiClient with JWT auto-attach
+HTTP Client: Custom apiClient with JWT auto-attach (cookie session via js-cookie)
 Icons: Iconify
-QR Code: qrcode library
+QR Code: qrcode (render) + html5-qrcode (camera scan on /scan)
 Data Validation: react-hook-form
 Database: DynamoDB (backend)
 File Storage: AWS S3
@@ -73,32 +73,44 @@ military-fe/
 │   │   ├── dashboard/
 │   │   ├── soldiers/
 │   │   ├── add-soldier/
+│   │   ├── vehicles/
+│   │   ├── scan/
+│   │   ├── requests/
 │   │   ├── history/
-│   │   └── requests/
+│   │   ├── units/
+│   │   ├── submission-groups/
+│   │   ├── submission-flows/
+│   │   └── leave-approval-configs/
 │   ├── layout.tsx
 │   └── providers.tsx
 ├── components/
 │   ├── Header.tsx
 │   ├── Sidebar.tsx
+│   ├── AuthGuard.tsx
+│   ├── PageHeader.tsx
 │   ├── SoldierTable.tsx
 │   ├── AddSoldierModal.tsx
 │   ├── ImageUpload.tsx
 │   ├── QRModal.tsx
+│   ├── SoldierVehicleModal.tsx
+│   ├── VehicleFormFields.tsx
+│   ├── VehicleImagesUpload.tsx
+│   ├── VehicleDeleteModal.tsx
 │   └── ...
 ├── hooks/
 │   ├── use-auth.ts
 │   ├── use-soldier.ts
-│   ├── use-region.ts
+│   ├── use-vehicle.ts
 │   ├── use-unit.ts
 │   ├── use-submission.ts
 │   ├── use-leave-request.ts
 │   ├── use-leave-approval-config.ts
 │   ├── use-qr-scan.ts
 │   ├── use-combobox.ts
-│   ├── use-debounce.ts
-│   └── ...
+│   └── use-debounce.ts
 ├── lib/
 │   ├── api-client.ts
+│   ├── image-url.ts
 │   └── routes/
 │       ├── routes.config.ts
 │       ├── routes.type.ts
@@ -169,23 +181,26 @@ military-fe/
 
 **API Endpoints**:
 
-- `POST /api/auth/signup` - Create personnel + user account
+- `POST /api/auth/signup` - Create personnel + user account (optional nested `vehicle`)
 - `GET /api/personnel?page=0&size=10&keyword=...` - List with pagination
-- `POST /api/personnel/upload-image` - Upload personnel image
+- `DELETE /api/personnel/{id}` - Delete personnel
+- `POST /api/common/upload-image?category=personnel` - Upload personnel image (unified upload endpoint)
 - `GET /api/common/images/personnel/{filename}` - Retrieve image
 
-**Data Model**:
+**Data Model** (actual, from `hooks/use-soldier.ts`):
 
 ```typescript
 interface Soldier {
-  id: string;
+  id: number;
   fullName: string;
-  rank: string;
-  unitName: string;
-  position: string;
+  rankCode: string | null;
+  unitCode: string | null;
+  positionCode: string | null;
   code: string; // Auto-generated: region|unit|rank|position|00001
-  qrCode: string; // System-generated
-  imageUrl?: string;
+  qrCode: string; // base64 PNG, system-generated
+  qrSource: string;
+  imageUrl: string | null;
+  vehicle?: VehicleResponse | null; // nested 1:1 vehicle, see Vehicle module
 }
 ```
 
@@ -193,44 +208,85 @@ interface Soldier {
 
 ### 3. Organization Management Module
 
-**Responsibility**: Manage military regions and units
+**Responsibility**: Manage military units
+
+> **Change (2026-07-21)**: The `use-region` hook and the regions management UI were **removed from the FE**. Regions still exist on the backend (and `regionCode` is still stored on units/personnel), but there is no FE screen or hook to CRUD them. Only units are managed through the UI (`/units`).
 
 **Key Files**:
 
-- `hooks/use-region.ts`
 - `hooks/use-unit.ts`
+- `app/(private)/units/page.tsx`
 
 **Features**:
 
-- Create/Update/Delete regions (code + name must be unique)
-- Create/Update/Delete units (linked to regions)
-- Upload logos for regions/units to S3
-- Hierarchical region → unit structure
-- Support filtering units by region
+- Create/Update/Delete units (each linked to a `regionCode`)
+- Upload logos for units to S3 (`uploadLogo`)
+- Search + pagination
 
 **API Endpoints**:
 
-- `CRUD /api/military-regions`
 - `CRUD /api/military-units`
-- `GET /api/common/combobox/regions`
+- `POST /api/common/upload-image?category=unit`
 - `GET /api/common/combobox/units?regionCode=...`
 
 **Data Model**:
 
 ```typescript
-interface MilitaryRegion {
-  id: string;
-  code: string; // Unique
-  name: string;
-  logoPath?: string; // S3 path
-}
-
 interface MilitaryUnit {
-  id: string;
-  code: string; // Unique
-  name: string;
-  regionCode: string; // Foreign key to region
-  logoPath?: string;
+  id: number;
+  regionCode: string;
+  unitCode: string; // Unique
+  unitName: string;
+  address?: string;
+  establishedDate?: string;
+  description?: string;
+  logoUrl?: string; // response (request uses logoPath)
+}
+```
+
+---
+
+### 3b. Vehicle Management Module
+
+**Responsibility**: Manage a personnel's vehicle (1:1). Added 2026-07-21.
+
+**Key Files**:
+
+- `hooks/use-vehicle.ts`
+- `app/(private)/vehicles/page.tsx`
+- `components/SoldierVehicleModal.tsx`, `components/VehicleFormFields.tsx`, `components/VehicleImagesUpload.tsx`, `components/VehicleDeleteModal.tsx`
+
+**Features**:
+
+- Attach a vehicle to a personnel (create), 1:1 constraint
+- View/update/delete a personnel's vehicle + images
+- Vehicle type is a fixed client-side enum (`CAR` = Ô tô, `MOTORBIKE` = Xe máy, `OTHER` = Khác) — no combobox endpoint
+- Multi-image upload (≤10) via `POST /api/common/upload-image?category=vehicle`; removing a saved image deletes it server-side immediately
+- Three entry points: Add-Soldier form section (switch-gated), per-soldier table action, standalone `/vehicles` page
+
+**API Endpoints**:
+
+- `POST /api/vehicles?personnelId={id}` - Attach
+- `GET /api/vehicles?page&size&keyword` - List (keyword: plate/brand/model)
+- `GET /api/vehicles/{id}` - Detail
+- `GET /api/vehicles/by-personnel/{personnelId}` - Detail by owner
+- `PUT /api/vehicles/{id}` - Update
+- `DELETE /api/vehicles/{id}/images?imagePath=...` - Delete one image
+- `DELETE /api/vehicles/{id}` - Delete vehicle + all images
+
+**Data Model** (from `hooks/use-vehicle.ts`):
+
+```typescript
+type VehicleType = "CAR" | "MOTORBIKE" | "OTHER";
+
+interface VehicleResponse {
+  id: number;
+  personnelId: number;
+  vehicleType: VehicleType;
+  brand: string;
+  model: string;
+  licensePlate: string;
+  imageUrls: string[]; // server-relative, prefix with NEXT_PUBLIC_BASE_API
 }
 ```
 
@@ -417,15 +473,17 @@ interface LeaveApprovalConfig {
 **Key Files**:
 
 - `hooks/use-qr-scan.ts`
-- `app/(private)/history/page.tsx`
+- `app/(private)/scan/page.tsx` (camera scanning via `html5-qrcode`)
 
 **Features**:
 
-- Scan QR codes (military personnel or civilian)
+- Scan QR codes (military personnel or civilian) from the device camera
 - For military personnel: auto-validate against leave requests
-- For civilians: manual approval workflow
+- For civilians: manual approval workflow (approve/reject on `/scan`)
 - Automatic `usedOutCount` increment on successful scan
-- Log all scans with timestamps and status
+- Log all scans with timestamps and status (`getQRScanLogs` lists them)
+
+> **Note**: `/history` currently renders pending leave requests (`getPendingLeaveRequests`), not the scan-log list. The scan-log list endpoint (`GET /api/qr-scan-logs`) is wrapped by `getQRScanLogs` and available for future use.
 
 **Scan Validation Logic (Military Personnel)**:
 
@@ -450,6 +508,7 @@ When QR scanned:
 - `POST /api/qr-scan-logs/{id}/approve` - Approve civilian
 - `POST /api/qr-scan-logs/{id}/reject` - Reject civilian
 - `GET /api/qr-scan-logs/{id}` - Get scan details
+- `GET /api/qr-scan-logs?page&size&keyword` - List scan logs
 
 **Data Model**:
 
@@ -476,16 +535,16 @@ interface QRScanLog {
 
 **Features**:
 
-- Fetch ranks list
-- Fetch positions list
-- Fetch regions list (filtered by user role)
-- Fetch units list (filtered by region + user role)
+- Fetch ranks list (`getRanks`)
+- Fetch positions list (`getPositions`)
+- Fetch units list (`getUnits`, filtered by region + user role)
+
+> **Change (2026-07-21)**: `getRegions` was removed from `use-combobox` along with the regions UI.
 
 **API Endpoints**:
 
 - `GET /api/common/combobox/ranks`
 - `GET /api/common/combobox/positions`
-- `GET /api/common/combobox/regions`
 - `GET /api/common/combobox/units?regionCode=...`
 
 ---
@@ -502,11 +561,19 @@ interface QRScanLog {
 
 ```
 /dashboard                      → Overview with stats
+/scan                           → QR gate scanning (camera)
 /soldiers                       → List all personnel with search/pagination
-/add-soldier                    → Form to add new personnel
-/history                        → QR scan logs (entrance/exit)
+/vehicles                       → Vehicle list / manage by personnel id
+/add-soldier                    → Form to add new personnel (+ optional vehicle)
 /requests                       → Leave request approval queue
+/history                        → Ra/vào view (pending leave requests)
+/units                          → Unit management
+/submission-groups              → Approval groups (members)
+/submission-flows               → Approval flows (ordered groups)
+/leave-approval-configs         → Leave approval config by position
 ```
+
+> Routes are auto-generated from the `app/(private)` folder tree by `lib/routes/scripts/generate-routes.ts` (`npx tsx`) — do not hand-edit `routes.config.ts` / `routes.util.ts`.
 
 ---
 
@@ -698,13 +765,17 @@ Actor: Civilian at gate
 
 #### `Sidebar`
 
-- Navigation links
-  - Dashboard
-  - Soldiers
-  - History
-  - Requests
-  - Add Soldier
+- Navigation grouped into 5 sections:
+  - **Tổng quan**: Dashboard, Quét QR cổng (`/scan`)
+  - **Quân nhân**: Danh sách quân nhân (`/soldiers`), Phương tiện (`/vehicles`)
+  - **Nghỉ phép**: Đơn nghỉ phép (`/requests`)
+  - **Lịch sử**: Lịch sử ra vào (`/history`)
+  - **Cấu hình hệ thống**: Đơn vị (`/units`), Nhóm trình (`/submission-groups`), Luồng trình (`/submission-flows`), Cấu hình phê duyệt (`/leave-approval-configs`)
+- Active route highlight
 - Sign out button
+- Dark olive/tactical gradient theme
+
+> "Add soldier" is a modal/action on `/soldiers`, not a sidebar item. Regions management is no longer in the FE.
 
 #### `Layout` (wrapper)
 

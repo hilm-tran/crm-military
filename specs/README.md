@@ -108,22 +108,35 @@ military-fe/
 │   │   ├── dashboard/
 │   │   ├── soldiers/
 │   │   ├── add-soldier/
+│   │   ├── vehicles/
+│   │   ├── scan/
+│   │   ├── requests/
 │   │   ├── history/
-│   │   └── requests/
+│   │   ├── units/
+│   │   ├── submission-groups/
+│   │   ├── submission-flows/
+│   │   └── leave-approval-configs/
 │   └── layout.tsx
 │
 ├── components/
 │   ├── Header.tsx
 │   ├── Sidebar.tsx
+│   ├── AuthGuard.tsx
+│   ├── PageHeader.tsx
 │   ├── SoldierTable.tsx
 │   ├── AddSoldierModal.tsx
 │   ├── ImageUpload.tsx
+│   ├── QRModal.tsx
+│   ├── SoldierVehicleModal.tsx
+│   ├── VehicleFormFields.tsx
+│   ├── VehicleImagesUpload.tsx
+│   ├── VehicleDeleteModal.tsx
 │   └── ...
 │
 ├── hooks/
 │   ├── use-auth.ts
 │   ├── use-soldier.ts
-│   ├── use-region.ts
+│   ├── use-vehicle.ts
 │   ├── use-unit.ts
 │   ├── use-submission.ts
 │   ├── use-leave-request.ts
@@ -134,6 +147,7 @@ military-fe/
 │
 ├── lib/
 │   ├── api-client.ts
+│   ├── image-url.ts
 │   └── routes/
 │
 ├── types/
@@ -155,6 +169,14 @@ military-fe/
 - ✅ Image upload to S3
 - ✅ Search & pagination
 - ✅ Role-based access control
+
+### Vehicle Management
+
+- ✅ 1:1 vehicle per personnel (Ô tô / Xe máy / Khác)
+- ✅ Optional vehicle section in the "Thêm quân nhân" form (created atomically)
+- ✅ Per-soldier vehicle view/create/edit/delete action on the soldiers table
+- ✅ Standalone `/vehicles` page (search, pagination, manage by personnel id)
+- ✅ Multi-image upload (≤10) with immediate server-side delete on edit
 
 ### Leave Request Workflow
 
@@ -181,16 +203,19 @@ military-fe/
 
 ## 📊 Module Responsibilities
 
-| Module            | Purpose            | Hooks                       | Pages                       |
-| ----------------- | ------------------ | --------------------------- | --------------------------- |
-| **Auth**          | Login/logout       | `use-auth`                  | `/login`                    |
-| **Personnel**     | CRUD soldiers      | `use-soldier`               | `/soldiers`, `/add-soldier` |
-| **Organization**  | Regions & units    | `use-region`, `use-unit`    | -                           |
-| **Submission**    | Approval workflows | `use-submission`            | -                           |
-| **Leave Request** | Leave management   | `use-leave-request`         | `/requests`                 |
-| **Leave Config**  | Approval rules     | `use-leave-approval-config` | -                           |
-| **QR Scan**       | Gate control       | `use-qr-scan`               | `/history`                  |
-| **Combobox**      | Dropdown data      | `use-combobox`              | -                           |
+| Module            | Purpose            | Hooks                       | Pages                                        |
+| ----------------- | ------------------ | --------------------------- | -------------------------------------------- |
+| **Auth**          | Login/logout       | `use-auth`                  | `/login`                                     |
+| **Personnel**     | CRUD soldiers      | `use-soldier`               | `/soldiers`, `/add-soldier`                  |
+| **Vehicle**       | CRUD vehicles      | `use-vehicle`               | `/vehicles` (+ soldiers table action & form) |
+| **Organization**  | Units              | `use-unit`                  | `/units`                                     |
+| **Submission**    | Approval workflows | `use-submission`            | `/submission-groups`, `/submission-flows`    |
+| **Leave Request** | Leave management   | `use-leave-request`         | `/requests`, `/history`                      |
+| **Leave Config**  | Approval rules     | `use-leave-approval-config` | `/leave-approval-configs`                    |
+| **QR Scan**       | Gate control       | `use-qr-scan`               | `/scan`                                      |
+| **Combobox**      | Dropdown data      | `use-combobox`              | -                                            |
+
+> **Note**: The `use-region` hook and any regions page were removed from the FE — regions still exist on the backend but are no longer managed through this UI. `use-combobox` now exposes `getRanks`, `getPositions`, `getUnits` (no `getRegions`).
 
 ---
 
@@ -238,7 +263,7 @@ military-fe/
 
 ### Unit Tests
 
-- Custom hooks (all 9 hooks)
+- Custom hooks (all 10 hooks)
 - Form validation
 - Utility functions
 
@@ -259,12 +284,12 @@ military-fe/
 ## 📚 Tech Stack
 
 ```
-Frontend Framework:   Next.js 14 (App Router)
-UI Library:           HeroUI + Tailwind CSS
+Frontend Framework:   Next.js 15 (App Router, Turbopack dev)
+UI Library:           HeroUI 2.8 + Tailwind CSS 4
 Form Handling:        react-hook-form
-HTTP Client:          Custom apiClient with JWT
+HTTP Client:          Custom apiClient with JWT (cookie session via js-cookie)
 Icons:                Iconify
-QR Codes:             qrcode library
+QR Codes:             qrcode (render) + html5-qrcode (camera scan, /scan page)
 State Management:     React Hooks (useCallback, useMemo)
 ```
 
@@ -357,6 +382,6 @@ For development issues:
 
 ---
 
-**Last Updated**: 2026-04-21  
-**Version**: 1.0  
+**Last Updated**: 2026-07-21  
+**Version**: 1.1  
 **Status**: In Development

@@ -1,7 +1,7 @@
 # Military Manager - Component & UI Specification
 
-**Version:** 1.0  
-**Last Updated:** 2026-04-21
+**Version:** 1.1  
+**Last Updated:** 2026-07-21
 
 ---
 
@@ -125,34 +125,44 @@ interface HeaderProps {
 
 **Features**:
 
-- Navigation menu
-- Active page highlight
+- Grouped navigation menu (5 sections)
+- Active page highlight (left accent bar + secondary color)
 - Logout button
 - Responsive (collapsible on mobile)
 
-**Menu Items**:
+**Menu Items** (from `NAV_GROUPS` in `Sidebar.tsx`):
 
 ```
-🏠 Dashboard           → /dashboard
-👥 Danh sách quân nhân → /soldiers
-📋 Lịch sử ra vào      → /history
-✉️ Duyệt yêu cầu      → /requests
-➕ Thêm quân nhân      → /add-soldier
+▸ Tổng quan
+  🏠 Dashboard            → /dashboard
+  🔳 Quét QR cổng         → /scan
+▸ Quân nhân
+  🛡️ Danh sách quân nhân  → /soldiers
+  🚗 Phương tiện          → /vehicles
+▸ Nghỉ phép
+  📄 Đơn nghỉ phép        → /requests
+▸ Lịch sử
+  🕘 Lịch sử ra vào       → /history
+▸ Cấu hình hệ thống
+  🏢 Đơn vị               → /units
+  👥 Nhóm trình           → /submission-groups
+  🗺️ Luồng trình          → /submission-flows
+  ⚙️ Cấu hình phê duyệt   → /leave-approval-configs
 ```
 
-**Styling**:
+**Styling** (tactical/olive theme, from `Sidebar.tsx`):
 
-- Background: Blue-900 (#1e3a8a)
-- Text: White
-- Width: 256px (fixed)
-- Height: 100vh (full screen)
-- Hover: Darker blue highlight
+- Background: dark olive gradient (`from-[#20281a] to-[#14170f]`)
+- Text: White with muted opacity states
+- Width: `w-72` (288px, fixed)
+- Min height: 100vh
+- Active: `bg-white/10` + secondary-400 accent bar; hover: `bg-white/5`
 
 **Logic**:
 
-- Use `useRouter()` for current route detection
+- Use `usePathname()` for current route detection
 - Show active indicator on current page
-- Close on mobile after navigation
+- Icons via Iconify (`@iconify/react`)
 
 ---
 
@@ -559,6 +569,49 @@ TRA_VE       → Orange (Returned)
 
 ---
 
+## Vehicle UI Components
+
+Added 2026-07-21 for the vehicle management feature (see `SYSTEM_SPEC.md` → Vehicle Management Module).
+
+### `/vehicles` Page
+
+**Location**: `app/(private)/vehicles/page.tsx`
+
+- Search (biển số / hãng / dòng) + pagination, mirrors the `/units` page pattern
+- "Add" flow requires typing a raw `personnelId` (no name-search endpoint on backend)
+- Row actions: view / edit / delete → `VehicleDeleteModal`
+
+### `SoldierVehicleModal`
+
+**Location**: `components/SoldierVehicleModal.tsx`
+
+- Opened from the per-soldier "Phương tiện" action on `SoldierTable`
+- View / create / edit / delete a single soldier's vehicle + images
+- Uses `getVehicleByPersonnelId`, `attachVehicle`, `updateVehicle`, `deleteVehicle`
+
+### `VehicleFormFields`
+
+**Location**: `components/VehicleFormFields.tsx`
+
+- Shared form fields: Loại xe (select: Ô tô / Xe máy / Khác), Hãng, Dòng, Biển số
+- Reused by the Add-Soldier modal (switch-gated section) and `SoldierVehicleModal`
+
+### `VehicleImagesUpload`
+
+**Location**: `components/VehicleImagesUpload.tsx`
+
+- Multi-image upload (≤10) via `uploadVehicleImage` (`category=vehicle`)
+- Editing a persisted vehicle: removing a saved image calls `deleteVehicleImage` immediately (server-side delete; not restored on Cancel)
+- Renders images through `lib/image-url.ts` (prefixes `NEXT_PUBLIC_BASE_API`)
+
+### `VehicleDeleteModal`
+
+**Location**: `components/VehicleDeleteModal.tsx`
+
+- Confirmation modal for deleting a vehicle (and all its images)
+
+---
+
 ## Reusable Components
 
 ### StatusBadge Component
@@ -589,7 +642,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({status, size = "md"}) =
 ```typescript
 interface ImageUploadProps {
   onUpload: (imagePath: string) => void;
-  category?: "personnel" | "region" | "unit";
+  category?: "personnel" | "region" | "unit" | "vehicle";
   maxSizeMB?: number;
 }
 
