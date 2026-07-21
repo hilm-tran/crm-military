@@ -146,7 +146,7 @@ export const useSubmission = () => {
       try {
         const result = await apiClient.post(
           `/api/submission-groups/${groupId}/users`,
-          { userId },
+          { userIds: [Number(userId)] },
         );
 
         addToast({
@@ -176,7 +176,7 @@ export const useSubmission = () => {
           `/api/submission-groups/${groupId}/users`,
           {
             method: "DELETE",
-            body: JSON.stringify({ userId }),
+            body: JSON.stringify({ userIds: [Number(userId)] }),
           },
         );
 
@@ -201,9 +201,16 @@ export const useSubmission = () => {
   // SubmissionFlow Operations
   const createFlow = useCallback(async (data: CreateSubmissionFlowParams) => {
     try {
+      const payload = {
+        ...data,
+        groups: data.groups.map((g) => ({
+          orderNo: Number(g.orderNo),
+          groupId: Number(g.groupId),
+        })),
+      };
       const result = await apiClient.post<SubmissionFlow>(
         "/api/submission-flows",
-        data,
+        payload,
       );
 
       addToast({
@@ -227,11 +234,18 @@ export const useSubmission = () => {
   const updateFlow = useCallback(async (data: UpdateSubmissionFlowParams) => {
     try {
       const { id, ...body } = data;
+      const payload = {
+        ...body,
+        groups: body.groups.map((g) => ({
+          orderNo: Number(g.orderNo),
+          groupId: Number(g.groupId),
+        })),
+      };
       const result = await apiClient.fetch<SubmissionFlow>(
         `/api/submission-flows/${id}`,
         {
           method: "PUT",
-          body: JSON.stringify(body),
+          body: JSON.stringify(payload),
         },
       );
 

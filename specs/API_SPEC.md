@@ -461,19 +461,23 @@ Content-Type: application/json
 
 **Purpose**: Add users to group
 
-**Request**:
+**Request** (`SubmissionGroupUsersRequest`):
 
 ```json
 {
-  "userId": "integer"
+  "userIds": [1, 2, 3]
 }
 ```
+
+> `userIds` is a **required array of integers** (not a single `userId`). Verified against live Swagger `/v3/api-docs`.
 
 ---
 
 ### DELETE /api/submission-groups/{id}/users
 
 **Purpose**: Remove users from group
+
+**Request**: same `SubmissionGroupUsersRequest` — `{ "userIds": [1, 2, 3] }`
 
 ---
 
