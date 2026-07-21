@@ -69,7 +69,7 @@ export const useSoldier = () => {
       const formData = new FormData();
       formData.append("multipartFile", file);
 
-      const result = await apiClient.fetch("/api/personnel/upload-image", {
+      const result = await apiClient.fetch("/api/common/upload-image?category=personnel", {
         method: "POST",
         body: formData,
       });

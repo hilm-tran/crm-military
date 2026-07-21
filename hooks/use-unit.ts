@@ -142,7 +142,7 @@ export const useUnit = () => {
       const formData = new FormData();
       formData.append("multipartFile", file);
 
-      const result = await apiClient.fetch("/api/common/upload-image", {
+      const result = await apiClient.fetch("/api/common/upload-image?category=unit", {
         method: "POST",
         body: formData,
         headers: {},
