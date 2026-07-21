@@ -9,6 +9,13 @@ export interface ApiResponse<T = any> {
   status: number;
 }
 
+function redirectToLogin() {
+  Cookies.remove(CookieNames.Session, { path: "/" });
+  if (typeof window === "undefined" || window.location.pathname.startsWith("/login")) return;
+  const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+  window.location.href = `/login?redirect=${redirect}`;
+}
+
 export const apiClient = {
   fetch: async <T = any>(
     path: string,
@@ -40,6 +47,11 @@ export const apiClient = {
       ...options,
       headers,
     });
+
+    if (response.status === 401) {
+      redirectToLogin();
+      throw new Error("Phiên đăng nhập đã hết hạn");
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
