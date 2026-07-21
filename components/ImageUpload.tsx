@@ -54,10 +54,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="relative w-full aspect-video border-2 border-dashed border-default-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden group"
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
       onClick={() => document.getElementById("file-upload")?.click()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          document.getElementById("file-upload")?.click();
+        }
+      }}
     >
       <input
         type="file"

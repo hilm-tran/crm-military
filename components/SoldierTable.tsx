@@ -41,13 +41,18 @@ const QRCodeCell = ({
   if (!base64) return <span className="text-default-400 text-sm">—</span>;
 
   return (
-    <img
-      alt="QR Code"
-      className="w-16 h-16 border rounded bg-white cursor-pointer hover:opacity-80 transition-opacity"
-      src={`data:image/png;base64,${base64}`}
+    <button
+      type="button"
+      className="w-16 h-16 border rounded bg-white p-0 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
       title={`Phóng to QR - ${name}`}
       onClick={onClick}
-    />
+    >
+      <img
+        alt="QR Code"
+        className="w-full h-full object-contain"
+        src={`data:image/png;base64,${base64}`}
+      />
+    </button>
   );
 };
 

@@ -133,8 +133,11 @@ function UnitFormModal({ isOpen, onOpenChange, editing, onSuccess }: FormModalPr
                 onValueChange={setDescription}
               />
               <div>
-                <label className="text-sm text-default-600 block mb-1">Logo (tùy chọn)</label>
+                <label htmlFor="unit-logo-file" className="text-sm text-default-600 block mb-1">
+                  Logo (tùy chọn)
+                </label>
                 <input
+                  id="unit-logo-file"
                   type="file"
                   accept="image/*"
                   className="text-sm"

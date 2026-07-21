@@ -378,7 +378,9 @@ function DetailModal({ isOpen, onOpenChange, request }: DetailModalProps) {
                             <StatusChip status={h.status} />
                           </div>
                           {h.reason && (
-                            <p className="text-default-500 italic">"{h.reason}"</p>
+                            <p className="text-default-500 italic">
+                              &quot;{h.reason}&quot;
+                            </p>
                           )}
                           {h.createdAt && (
                             <p className="text-default-400 text-xs mt-1">
