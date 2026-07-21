@@ -41,7 +41,6 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Cấu hình hệ thống",
     items: [
-      { href: "/regions", label: "Quân khu", icon: "mdi:map-marker-radius-outline" },
       { href: "/units", label: "Đơn vị", icon: "mdi:office-building-marker-outline" },
       { href: "/submission-groups", label: "Nhóm trình", icon: "mdi:account-multiple-outline" },
       { href: "/submission-flows", label: "Luồng trình", icon: "mdi:sitemap-outline" },

@@ -6,7 +6,6 @@ export interface MilitaryUnit {
   id: string | number;
   unitCode: string;
   unitName: string;
-  regionCode: string;
   logoUrl?: string | null;
   address?: string;
   establishedDate?: string;
@@ -18,7 +17,6 @@ export interface MilitaryUnit {
 export interface CreateUnitParams {
   unitCode: string;
   unitName: string;
-  regionCode: string;
   logoPath?: string;
   address?: string;
   establishedDate?: string;
@@ -106,10 +104,9 @@ export const useUnit = () => {
     }
   }, []);
 
-  const getUnits = useCallback(async (params?: { regionCode?: string; keyword?: string; page?: number; size?: number }) => {
+  const getUnits = useCallback(async (params?: { keyword?: string; page?: number; size?: number }) => {
     try {
       const query = new URLSearchParams();
-      if (params?.regionCode) query.set("regionCode", params.regionCode);
       if (params?.keyword) query.set("keyword", params.keyword);
       if (params?.page !== undefined) query.set("page", params.page.toString());
       if (params?.size !== undefined) query.set("size", params.size.toString());

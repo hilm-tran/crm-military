@@ -5,7 +5,6 @@ import { useCallback, useMemo } from "react";
 export interface Soldier {
   id: number;
   fullName: string;
-  regionCode: string | null;
   rankCode: string | null;
   unitCode: string | null;
   positionCode: string | null;

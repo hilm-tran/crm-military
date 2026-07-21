@@ -3,7 +3,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { useDebounce } from "@/hooks/use-debounce";
 import { MilitaryUnit, useUnit } from "@/hooks/use-unit";
-import { useRegion } from "@/hooks/use-region";
 import {
   Button,
   Input,
@@ -27,8 +26,6 @@ import {
 import { Icon } from "@iconify/react";
 import { useCallback, useEffect, useState } from "react";
 
-interface RegionOption { regionCode: string; regionName: string; }
-
 const PAGE_SIZE = 10;
 
 // ─── Form modal ───────────────────────────────────────────────────────────────
@@ -37,15 +34,13 @@ interface FormModalProps {
   isOpen: boolean;
   onOpenChange: () => void;
   editing: MilitaryUnit | null;
-  regions: RegionOption[];
   onSuccess: () => void;
 }
 
-function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: FormModalProps) {
+function UnitFormModal({ isOpen, onOpenChange, editing, onSuccess }: FormModalProps) {
   const { createUnit, updateUnit, uploadLogo } = useUnit();
   const [unitCode, setUnitCode] = useState("");
   const [unitName, setUnitName] = useState("");
-  const [regionCode, setRegionCode] = useState<Set<string>>(new Set());
   const [address, setAddress] = useState("");
   const [establishedDate, setEstablishedDate] = useState("");
   const [description, setDescription] = useState("");
@@ -56,7 +51,6 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
     if (isOpen) {
       setUnitCode(editing?.unitCode ?? "");
       setUnitName(editing?.unitName ?? "");
-      setRegionCode(editing?.regionCode ? new Set([editing.regionCode]) : new Set());
       setAddress(editing?.address ?? "");
       setEstablishedDate(editing?.establishedDate ?? "");
       setDescription(editing?.description ?? "");
@@ -64,10 +58,8 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
     }
   }, [isOpen, editing]);
 
-  const selectedRegion = Array.from(regionCode)[0] ?? "";
-
   const handleSubmit = async (onClose: () => void) => {
-    if (!unitCode.trim() || !unitName.trim() || !selectedRegion) return;
+    if (!unitCode.trim() || !unitName.trim()) return;
     try {
       setIsSubmitting(true);
       let logoPath = editing?.logoUrl ?? undefined;
@@ -80,7 +72,6 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
       const payload = {
         unitCode,
         unitName,
-        regionCode: selectedRegion,
         logoPath,
         address: address || undefined,
         establishedDate: establishedDate || undefined,
@@ -122,17 +113,6 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
                 onValueChange={setUnitName}
                 isRequired
               />
-              <Select
-                label="Quân khu"
-                placeholder="Chọn quân khu"
-                selectedKeys={regionCode}
-                onSelectionChange={(keys) => setRegionCode(keys as Set<string>)}
-                isRequired
-              >
-                {regions.map((r) => (
-                  <SelectItem key={r.regionCode}>{r.regionName} ({r.regionCode})</SelectItem>
-                ))}
-              </Select>
               <Input
                 label="Địa chỉ"
                 placeholder="VD: Số 1 Đường ABC, TP.HCM"
@@ -167,7 +147,7 @@ function UnitFormModal({ isOpen, onOpenChange, editing, regions, onSuccess }: Fo
               <Button
                 color="primary"
                 isLoading={isSubmitting}
-                isDisabled={!unitCode.trim() || !unitName.trim() || !selectedRegion}
+                isDisabled={!unitCode.trim() || !unitName.trim()}
                 onPress={() => handleSubmit(onClose)}
               >
                 {editing ? "Lưu" : "Thêm"}
@@ -230,14 +210,11 @@ function DeleteModal({ isOpen, onOpenChange, target, onSuccess }: DeleteModalPro
 
 export default function UnitsPage() {
   const { getUnits } = useUnit();
-  const { getRegions } = useRegion();
   const [units, setUnits] = useState<MilitaryUnit[]>([]);
-  const [regions, setRegions] = useState<RegionOption[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 500);
-  const [filterRegion, setFilterRegion] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [editing, setEditing] = useState<MilitaryUnit | null>(null);
   const [deleting, setDeleting] = useState<MilitaryUnit | null>(null);
@@ -245,19 +222,10 @@ export default function UnitsPage() {
   const formModal = useDisclosure();
   const deleteModal = useDisclosure();
 
-  const loadRegions = useCallback(async () => {
-    const res = await getRegions().catch(() => null);
-    const rawRegions = (res as any)?.data;
-    const list = Array.isArray(rawRegions) ? rawRegions : rawRegions?.content ?? [];
-    setRegions(list.map((r: any) => ({ regionCode: r.regionCode, regionName: r.regionName })));
-  }, [getRegions]);
-
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const selectedRegion = Array.from(filterRegion)[0];
       const res = await getUnits({
-        regionCode: selectedRegion,
         keyword: debouncedKeyword || undefined,
         page: page - 1,
         size: PAGE_SIZE,
@@ -271,10 +239,9 @@ export default function UnitsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [getUnits, filterRegion, debouncedKeyword, page]);
+  }, [getUnits, debouncedKeyword, page]);
 
-  useEffect(() => { loadRegions(); }, [loadRegions]);
-  useEffect(() => { setPage(1); }, [debouncedKeyword, filterRegion]);
+  useEffect(() => { setPage(1); }, [debouncedKeyword]);
   useEffect(() => { load(); }, [load]);
 
   const openAdd = () => { setEditing(null); formModal.onOpen(); };
@@ -286,7 +253,7 @@ export default function UnitsPage() {
       <PageHeader
         icon="mdi:office-building-marker-outline"
         title="Quản lý Đơn vị"
-        subtitle="Danh sách đơn vị trực thuộc các quân khu"
+        subtitle="Danh sách đơn vị"
       />
 
       <div className="flex gap-4 items-center justify-between">
@@ -326,7 +293,6 @@ export default function UnitsPage() {
           <TableColumn>STT</TableColumn>
           <TableColumn>MÃ</TableColumn>
           <TableColumn>TÊN</TableColumn>
-          <TableColumn>QUÂN KHU</TableColumn>
           <TableColumn>ĐỊA CHỈ</TableColumn>
           <TableColumn>LOGO</TableColumn>
           <TableColumn>HÀNH ĐỘNG</TableColumn>
@@ -335,7 +301,7 @@ export default function UnitsPage() {
           {isLoading
             ? Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((__, j) => (
+                  {Array.from({ length: 6 }).map((__, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full rounded" /></TableCell>
                   ))}
                 </TableRow>
@@ -343,7 +309,7 @@ export default function UnitsPage() {
             : units.length === 0
               ? (
                 <TableRow>
-                  <TableCell className="text-center text-default-400 py-8" colSpan={7}>
+                  <TableCell className="text-center text-default-400 py-8" colSpan={6}>
                     {keyword ? "Không tìm thấy kết quả" : "Chưa có đơn vị nào"}
                   </TableCell>
                 </TableRow>
@@ -353,7 +319,6 @@ export default function UnitsPage() {
                     <TableCell>{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
                     <TableCell className="font-mono font-medium">{u.unitCode}</TableCell>
                     <TableCell>{u.unitName}</TableCell>
-                    <TableCell>{u.regionCode}</TableCell>
                     <TableCell>{u.address ?? "—"}</TableCell>
                     <TableCell>
                       {u.logoUrl
@@ -375,7 +340,6 @@ export default function UnitsPage() {
         isOpen={formModal.isOpen}
         onOpenChange={formModal.onOpenChange}
         editing={editing}
-        regions={regions}
         onSuccess={load}
       />
       <DeleteModal

@@ -30,7 +30,6 @@ interface FormValues {
   password: string;
   fullName: string;
   rankCode: string;
-  regionCode: string;
   unitCode: string;
   positionCode: string;
   imagePath: string;
@@ -42,11 +41,10 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
   onSuccess,
 }) => {
   const { createSoldier } = useSoldier();
-  const { getRanks, getPositions, getRegions, getUnits } = useCombobox();
+  const { getRanks, getPositions, getUnits } = useCombobox();
   const [showPassword, setShowPassword] = useState(false);
   const [ranks, setRanks] = useState<{ code: string; name: string }[]>([]);
   const [positions, setPositions] = useState<{ code: string; name: string }[]>([]);
-  const [regions, setRegions] = useState<{ code: string; name: string }[]>([]);
   const [units, setUnits] = useState<{ code: string; name: string }[]>([]);
 
   const {
@@ -64,29 +62,19 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
       password: "",
       fullName: "",
       rankCode: "",
-      regionCode: "",
       unitCode: "",
       positionCode: "",
       imagePath: "",
     },
   });
 
-  const selectedRegion = watch("regionCode");
-
   // Load combobox data when modal opens
   useEffect(() => {
     if (!isOpen) return;
     getRanks().then(setRanks);
     getPositions().then(setPositions);
-    getRegions().then(setRegions);
-  }, [isOpen, getRanks, getPositions, getRegions]);
-
-  // Reload units when region changes
-  useEffect(() => {
-    if (!selectedRegion) { setUnits([]); return; }
-    setValue("unitCode", "");
-    getUnits(selectedRegion).then(setUnits);
-  }, [selectedRegion, getUnits, setValue]);
+    getUnits().then(setUnits);
+  }, [isOpen, getRanks, getPositions, getUnits]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -213,26 +201,6 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
                   />
 
                   <Controller
-                    name="regionCode"
-                    control={control}
-                    rules={{ required: "Bắt buộc" }}
-                    render={({ field }) => (
-                      <Select
-                        label="Quân khu"
-                        variant="bordered"
-                        selectedKeys={field.value ? new Set([field.value]) : new Set()}
-                        onSelectionChange={(keys) => field.onChange(Array.from(keys)[0] ?? "")}
-                        isInvalid={!!errors.regionCode}
-                        errorMessage={errors.regionCode?.message}
-                      >
-                        {regions.map((r) => (
-                          <SelectItem key={r.code}>{r.name}</SelectItem>
-                        ))}
-                      </Select>
-                    )}
-                  />
-
-                  <Controller
                     name="unitCode"
                     control={control}
                     rules={{ required: "Bắt buộc" }}
@@ -240,8 +208,7 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
                       <Select
                         label="Đơn vị"
                         variant="bordered"
-                        isDisabled={!selectedRegion}
-                        placeholder={selectedRegion ? "Chọn đơn vị" : "Chọn quân khu trước"}
+                        placeholder="Chọn đơn vị"
                         selectedKeys={field.value ? new Set([field.value]) : new Set()}
                         onSelectionChange={(keys) => field.onChange(Array.from(keys)[0] ?? "")}
                         isInvalid={!!errors.unitCode}

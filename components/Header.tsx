@@ -13,7 +13,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/requests": "Quản lý nghỉ phép",
   "/history": "Lịch sử ra vào",
   "/scan": "Quét QR cổng",
-  "/regions": "Quản lý quân khu",
   "/units": "Quản lý đơn vị",
   "/submission-groups": "Nhóm trình",
   "/submission-flows": "Luồng trình",
@@ -22,7 +21,6 @@ const PAGE_TITLES: Record<string, string> = {
 
 const ROLE_LABEL: Record<string, { label: string; color: "primary" | "warning" | "success" | "default" }> = {
   ROLE_SYSTEM_ADMIN: { label: "System Admin", color: "primary" },
-  ROLE_ADMIN_REGION: { label: "Quản lý quân khu", color: "warning" },
   ROLE_ADMIN_UNIT: { label: "Quản lý đơn vị", color: "success" },
   ROLE_USER: { label: "Quân nhân", color: "default" },
   ROLE_MODERATOR: { label: "Moderator", color: "default" },

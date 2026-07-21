@@ -6,7 +6,6 @@ export interface MilitaryPersonnelQR {
   id?: number;
   code?: string;
   fullName: string;
-  regionCode?: string;
   rankCode?: string;
   unitCode?: string;
   positionCode?: string;

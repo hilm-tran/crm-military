@@ -8,7 +8,6 @@ export interface ComboboxItem {
 
 export interface Rank extends ComboboxItem {}
 export interface Position extends ComboboxItem {}
-export interface Region extends ComboboxItem {}
 export interface Unit extends ComboboxItem {}
 
 export const useCombobox = () => {
@@ -34,26 +33,9 @@ export const useCombobox = () => {
     }
   }, []);
 
-  const getRegions = useCallback(async (): Promise<Region[]> => {
+  const getUnits = useCallback(async (): Promise<Unit[]> => {
     try {
-      const result = await apiClient.get<Region[]>(
-        "/api/common/combobox/regions",
-      );
-      return (result as any)?.data ?? [];
-    } catch (error: any) {
-      console.error("Get Regions Error:", error);
-      return [];
-    }
-  }, []);
-
-  const getUnits = useCallback(async (regionCode?: string): Promise<Unit[]> => {
-    try {
-      const query = regionCode
-        ? `?regionCode=${encodeURIComponent(regionCode)}`
-        : "";
-      const result = await apiClient.get<Unit[]>(
-        `/api/common/combobox/units${query}`,
-      );
+      const result = await apiClient.get<Unit[]>("/api/common/combobox/units");
       return (result as any)?.data ?? [];
     } catch (error: any) {
       console.error("Get Units Error:", error);
@@ -65,9 +47,8 @@ export const useCombobox = () => {
     () => ({
       getRanks,
       getPositions,
-      getRegions,
       getUnits,
     }),
-    [getRanks, getPositions, getRegions, getUnits],
+    [getRanks, getPositions, getUnits],
   );
 };
