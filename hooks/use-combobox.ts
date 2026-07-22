@@ -56,13 +56,26 @@ export const useCombobox = () => {
     }
   }, []);
 
+  const getMilitaryPersonnel = useCallback(async (): Promise<UserOption[]> => {
+    try {
+      const result = await apiClient.get<UserOption[]>(
+        "/api/common/combobox/military-personnel",
+      );
+      return (result as any)?.data ?? [];
+    } catch (error: any) {
+      console.error("Get Military Personnel Error:", error);
+      return [];
+    }
+  }, []);
+
   return useMemo(
     () => ({
       getRanks,
       getPositions,
       getUnits,
       getUsers,
+      getMilitaryPersonnel,
     }),
-    [getRanks, getPositions, getUnits, getUsers],
+    [getRanks, getPositions, getUnits, getUsers, getMilitaryPersonnel],
   );
 };

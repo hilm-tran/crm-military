@@ -75,7 +75,7 @@ function VehicleFormModal({
   onSuccess,
 }: FormModalProps) {
   const { attachVehicle, updateVehicle } = useVehicle();
-  const { getUsers } = useCombobox();
+  const { getMilitaryPersonnel } = useCombobox();
   const [users, setUsers] = useState<UserOption[]>([]);
   const [personnelId, setPersonnelId] = useState<string | null>(null);
   const [vehicle, setVehicle] = useState<VehicleFieldsValue>(EMPTY_VEHICLE);
@@ -88,7 +88,7 @@ function VehicleFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    getUsers().then(setUsers);
+    getMilitaryPersonnel().then(setUsers);
     if (editing) {
       setPersonnelId(String(editing.personnelId));
       setVehicle({
@@ -106,7 +106,7 @@ function VehicleFormModal({
       setImageUrls([]);
     }
     setErrors({});
-  }, [isOpen, editing, getUsers]);
+  }, [isOpen, editing, getMilitaryPersonnel]);
 
   const handleSubmit = async (onClose: () => void) => {
     const nextErrors: Partial<Record<keyof VehicleFieldsValue, string>> = {};
@@ -222,7 +222,7 @@ function VehicleFormModal({
 
 export default function VehiclesPage() {
   const { getVehicles, deleteVehicle } = useVehicle();
-  const { getUsers } = useCombobox();
+  const { getMilitaryPersonnel } = useCombobox();
   const [users, setUsers] = useState<UserOption[]>([]);
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -263,8 +263,8 @@ export default function VehiclesPage() {
     load();
   }, [load]);
   useEffect(() => {
-    getUsers().then(setUsers);
-  }, [getUsers]);
+    getMilitaryPersonnel().then(setUsers);
+  }, [getMilitaryPersonnel]);
 
   const personnelName = (personnelId: number) =>
     users.find((u) => String(u.code) === String(personnelId))?.name ??
