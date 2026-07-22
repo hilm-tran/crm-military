@@ -1,9 +1,12 @@
 "use client";
 
 import { PageHeader } from "@/components/PageHeader";
+import { useCombobox, UserOption } from "@/hooks/use-combobox";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SubmissionGroup, useSubmission } from "@/hooks/use-submission";
 import {
+  Autocomplete,
+  AutocompleteItem,
   Button,
   Chip,
   Input,
@@ -115,15 +118,30 @@ interface ManageUsersModalProps {
 
 function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUsersModalProps) {
   const { addUserToGroup, removeUserFromGroup } = useSubmission();
-  const [newUserId, setNewUserId] = useState("");
+  const { getUsers } = useCombobox();
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setNewUserId(null);
+    getUsers().then(setUsers);
+  }, [isOpen, getUsers]);
+
+  const userName = (uid: string) =>
+    users.find((u) => u.code === uid)?.name ?? uid;
+
+  const availableUsers = users.filter(
+    (u) => !(group?.userIds ?? []).includes(u.code),
+  );
+
   const handleAdd = async () => {
-    if (!group || !newUserId.trim()) return;
+    if (!group || !newUserId) return;
     try {
       setIsAdding(true);
-      await addUserToGroup(group.id, newUserId.trim());
-      setNewUserId("");
+      await addUserToGroup(group.id, newUserId);
+      setNewUserId(null);
       onSuccess();
     } catch {
     } finally {
@@ -162,7 +180,7 @@ function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUser
                         onClose={() => handleRemove(uid)}
                         variant="flat"
                       >
-                        {uid}
+                        {userName(uid)}
                       </Chip>
                     ))}
                   </div>
@@ -171,17 +189,23 @@ function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUser
 
               {/* Add user */}
               <div className="flex gap-2">
-                <Input
-                  label="User ID"
-                  placeholder="Nhập user ID..."
-                  value={newUserId}
-                  onValueChange={setNewUserId}
+                <Autocomplete
                   className="flex-1"
-                />
+                  label="Người dùng"
+                  placeholder="Tìm và chọn người dùng..."
+                  selectedKey={newUserId}
+                  onSelectionChange={(key) =>
+                    setNewUserId(key ? String(key) : null)
+                  }
+                >
+                  {availableUsers.map((u) => (
+                    <AutocompleteItem key={u.code}>{u.name}</AutocompleteItem>
+                  ))}
+                </Autocomplete>
                 <Button
                   color="primary"
                   isLoading={isAdding}
-                  isDisabled={!newUserId.trim()}
+                  isDisabled={!newUserId}
                   onPress={handleAdd}
                   className="self-end"
                 >

@@ -9,6 +9,7 @@ export interface ComboboxItem {
 export interface Rank extends ComboboxItem {}
 export interface Position extends ComboboxItem {}
 export interface Unit extends ComboboxItem {}
+export interface UserOption extends ComboboxItem {}
 
 export const useCombobox = () => {
   const getRanks = useCallback(async (): Promise<Rank[]> => {
@@ -43,12 +44,25 @@ export const useCombobox = () => {
     }
   }, []);
 
+  const getUsers = useCallback(async (): Promise<UserOption[]> => {
+    try {
+      const result = await apiClient.get<UserOption[]>(
+        "/api/common/combobox/users",
+      );
+      return (result as any)?.data ?? [];
+    } catch (error: any) {
+      console.error("Get Users Error:", error);
+      return [];
+    }
+  }, []);
+
   return useMemo(
     () => ({
       getRanks,
       getPositions,
       getUnits,
+      getUsers,
     }),
-    [getRanks, getPositions, getUnits],
+    [getRanks, getPositions, getUnits, getUsers],
   );
 };
