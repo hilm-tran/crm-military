@@ -5,6 +5,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { SubmissionFlow, SubmissionFlowGroup, useSubmission } from "@/hooks/use-submission";
 import {
   Button,
+  Card,
   Chip,
   Input,
   Modal,
@@ -285,16 +286,16 @@ export default function SubmissionFlowsPage() {
     groups.find((g) => g.id === String(groupId))?.name ?? String(groupId);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:sitemap-outline"
         title="Luồng trình"
         subtitle="Cấu hình luồng phê duyệt nhiều cấp theo nhóm"
       />
 
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm theo tên, mã luồng..."
           value={keyword}
           onValueChange={setKeyword}
@@ -302,11 +303,12 @@ export default function SubmissionFlowsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+        <Button className="w-full sm:w-auto" color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
           Thêm luồng
         </Button>
       </div>
 
+      <div className="hidden sm:block">
       <Table
         aria-label="Danh sách luồng trình"
         bottomContent={
@@ -369,6 +371,49 @@ export default function SubmissionFlowsPage() {
                 ))}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : flows.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            {keyword ? "Không tìm thấy kết quả" : "Chưa có luồng nào"}
+          </p>
+        ) : (
+          flows.map((f) => (
+            <Card key={f.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium truncate">{f.name}</p>
+                <Chip size="sm" variant="flat" color="primary">{f.code}</Chip>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {(f.groups ?? [])
+                  .sort((a, b) => a.orderNo - b.orderNo)
+                  .map((s) => (
+                    <Chip key={s.orderNo} size="sm" variant="flat">
+                      {s.orderNo}. {getGroupName(s.groupId)}
+                    </Chip>
+                  ))}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <Button className="flex-1" size="sm" variant="flat" onPress={() => openEdit(f)}>Sửa</Button>
+                <Button className="flex-1" size="sm" variant="flat" color="danger" onPress={() => openDelete(f)}>Xóa</Button>
+              </div>
+            </Card>
+          ))
+        )}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center pt-2">
+            <Pagination isCompact showControls showShadow color="primary" page={page} total={totalPages} onChange={setPage} />
+          </div>
+        )}
+      </div>
 
       <FlowFormModal
         isOpen={formModal.isOpen}

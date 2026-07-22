@@ -5,6 +5,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { LeaveApprovalConfig, useLeaveApprovalConfig } from "@/hooks/use-leave-approval-config";
 import {
   Button,
+  Card,
   Chip,
   DateInput,
   Input,
@@ -135,7 +136,7 @@ function ConfigFormModal({ isOpen, onOpenChange, editing, onSuccess }: FormModal
                 minValue={1}
                 isRequired
               />
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <DateInput
                   label="Hiệu lực từ"
                   value={effectiveFrom}
@@ -269,16 +270,16 @@ export default function LeaveApprovalConfigsPage() {
   const openDelete = (c: LeaveApprovalConfig) => { setDeleting(c); deleteModal.onOpen(); };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:cog-outline"
         title="Cấu hình phê duyệt"
         subtitle="Giới hạn số ngày nghỉ tối đa theo chức vụ"
       />
 
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm theo chức vụ..."
           value={keyword}
           onValueChange={setKeyword}
@@ -286,11 +287,12 @@ export default function LeaveApprovalConfigsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+        <Button className="w-full sm:w-auto" color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
           Thêm cấu hình
         </Button>
       </div>
 
+      <div className="hidden sm:block">
       <Table
         aria-label="Danh sách cấu hình phê duyệt"
         bottomContent={
@@ -352,6 +354,53 @@ export default function LeaveApprovalConfigsPage() {
                 ))}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : configs.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            {keyword ? "Không tìm thấy kết quả" : "Chưa có cấu hình nào"}
+          </p>
+        ) : (
+          configs.map((c) => (
+            <Card key={c.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium truncate">
+                  {positionLabel(c.militaryPosition, c.militaryPositionName)}
+                </p>
+                <Chip size="sm" color={c.active ? "success" : "default"} variant="flat">
+                  {c.active ? "Đang áp dụng" : "Tạm dừng"}
+                </Chip>
+              </div>
+              <div className="mt-2 text-xs text-default-500 space-y-0.5">
+                <p>Số ngày tối đa: {c.maxApprovalDays} ngày</p>
+                <p>
+                  Hiệu lực: {formatDate(c.effectiveFrom)} → {formatDate(c.effectiveTo)}
+                </p>
+              </div>
+              <div className="mt-3 flex gap-2 flex-wrap">
+                <Button size="sm" variant="flat" color={c.active ? "warning" : "success"} onPress={() => handleToggle(c.id)}>
+                  {c.active ? "Tạm dừng" : "Kích hoạt"}
+                </Button>
+                <Button size="sm" variant="flat" onPress={() => openEdit(c)}>Sửa</Button>
+                <Button size="sm" variant="flat" color="danger" onPress={() => openDelete(c)}>Xóa</Button>
+              </div>
+            </Card>
+          ))
+        )}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center pt-2">
+            <Pagination isCompact showControls showShadow color="primary" page={page} total={totalPages} onChange={setPage} />
+          </div>
+        )}
+      </div>
 
       <ConfigFormModal
         isOpen={formModal.isOpen}

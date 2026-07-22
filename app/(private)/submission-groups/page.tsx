@@ -8,6 +8,7 @@ import {
   Autocomplete,
   AutocompleteItem,
   Button,
+  Card,
   Chip,
   Input,
   Modal,
@@ -189,7 +190,7 @@ function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUser
               </div>
 
               {/* Add user */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Autocomplete
                   className="flex-1"
                   label="Người dùng"
@@ -208,7 +209,7 @@ function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUser
                   isLoading={isAdding}
                   isDisabled={!newUserId}
                   onPress={handleAdd}
-                  className="self-end"
+                  className="w-full sm:w-auto sm:self-end"
                 >
                   Thêm
                 </Button>
@@ -325,16 +326,16 @@ export default function SubmissionGroupsPage() {
   }, [load]);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:account-multiple-outline"
         title="Nhóm trình"
         subtitle="Nhóm người dùng tham gia phê duyệt đơn"
       />
 
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm theo tên nhóm..."
           value={keyword}
           onValueChange={setKeyword}
@@ -342,11 +343,12 @@ export default function SubmissionGroupsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+        <Button className="w-full sm:w-auto" color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
           Thêm nhóm
         </Button>
       </div>
 
+      <div className="hidden sm:block">
       <Table
         aria-label="Danh sách nhóm trình"
         bottomContent={
@@ -400,6 +402,46 @@ export default function SubmissionGroupsPage() {
                 ))}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : groups.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            {keyword ? "Không tìm thấy kết quả" : "Chưa có nhóm nào"}
+          </p>
+        ) : (
+          groups.map((g) => (
+            <Card key={g.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium truncate">{g.name}</p>
+                <Chip size="sm" variant="flat">{g.userIds?.length ?? 0} thành viên</Chip>
+              </div>
+              {g.description && (
+                <p className="mt-1 text-xs text-default-500">{g.description}</p>
+              )}
+              <div className="mt-3 flex gap-2 flex-wrap">
+                <Button size="sm" variant="flat" color="primary" onPress={() => openManage(g)}>
+                  Thành viên
+                </Button>
+                <Button size="sm" variant="flat" onPress={() => openEdit(g)}>Sửa</Button>
+                <Button size="sm" variant="flat" color="danger" onPress={() => openDelete(g)}>Xóa</Button>
+              </div>
+            </Card>
+          ))
+        )}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center pt-2">
+            <Pagination isCompact showControls showShadow color="primary" page={page} total={totalPages} onChange={setPage} />
+          </div>
+        )}
+      </div>
 
       <GroupFormModal
         isOpen={formModal.isOpen}

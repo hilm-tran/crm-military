@@ -2,6 +2,7 @@
 
 import {
   Button,
+  Card,
   Input,
   Modal,
   ModalBody,
@@ -174,10 +175,10 @@ export const SoldierTable = () => {
 
   return (
     <>
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
           isClearable
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm theo tên, số hiệu..."
           startContent={
             <Icon className="text-default-400" icon="mdi:magnify" />
@@ -188,6 +189,7 @@ export const SoldierTable = () => {
         />
 
         <Button
+          className="w-full sm:w-auto"
           color="primary"
           startContent={<Icon icon="mdi:plus" />}
           onPress={onOpen}
@@ -196,7 +198,7 @@ export const SoldierTable = () => {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="hidden sm:flex flex-col gap-4">
         <Table
           aria-label="Danh sách quân nhân"
           bottomContent={
@@ -290,6 +292,107 @@ export const SoldierTable = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : data.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            Không tìm thấy quân nhân nào
+          </p>
+        ) : (
+          data.map((item, idx) => (
+            <Card key={item.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{item.fullName}</p>
+                  <p className="text-xs text-default-400 font-mono">
+                    {item.code}
+                  </p>
+                </div>
+                <QRCodeCell
+                  base64={item.qrCode}
+                  name={item.fullName}
+                  onClick={() => {
+                    setQrSoldier(item);
+                    onQROpen();
+                  }}
+                />
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-default-500">
+                <p>
+                  STT:{" "}
+                  <span className="text-foreground">
+                    {idx + 1 + (page - 1) * size}
+                  </span>
+                </p>
+                <p>
+                  Đơn vị:{" "}
+                  <span className="text-foreground">
+                    {item.unitCode ?? "—"}
+                  </span>
+                </p>
+                <p>
+                  Cấp bậc:{" "}
+                  <span className="text-foreground">
+                    {item.rankCode
+                      ? (rankMap[item.rankCode] ?? item.rankCode)
+                      : "—"}
+                  </span>
+                </p>
+                <p>
+                  Chức vụ:{" "}
+                  <span className="text-foreground">
+                    {item.positionCode
+                      ? (positionMap[item.positionCode] ?? item.positionCode)
+                      : "—"}
+                  </span>
+                </p>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  className="flex-1"
+                  color={item.vehicle ? "primary" : "default"}
+                  size="sm"
+                  startContent={<Icon icon="mdi:car-outline" />}
+                  variant="flat"
+                  onPress={() => {
+                    setSelectedVehicleSoldier(item);
+                    onVehicleModalOpen();
+                  }}
+                >
+                  Phương tiện
+                </Button>
+                <Button
+                  isIconOnly
+                  color="danger"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => handleDeleteClick(item)}
+                >
+                  <Icon icon="mdi:trash" />
+                </Button>
+              </div>
+            </Card>
+          ))
+        )}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center pt-2">
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="primary"
+              page={page}
+              total={totalPages}
+              onChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
 
       <AddSoldierModal

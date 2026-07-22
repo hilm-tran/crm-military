@@ -148,7 +148,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
         <p className="text-sm text-default-500">
@@ -208,7 +208,7 @@ export default function DashboardPage() {
 
       {/* Biểu đồ thống kê số lượt ra vào */}
       <Card className="p-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
           <div>
             <h2 className="text-base font-semibold text-foreground">
               Thống kê số lượt ra vào
@@ -219,7 +219,7 @@ export default function DashboardPage() {
           </div>
           <Select
             aria-label="Khoảng thời gian"
-            className="w-40"
+            className="w-full sm:w-40"
             selectedKeys={new Set([period])}
             size="sm"
             variant="bordered"

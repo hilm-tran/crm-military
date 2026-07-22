@@ -1,7 +1,8 @@
 "use client";
 
 import { CookieNames } from "@/types/global.enum";
-import { Avatar, Chip, Divider } from "@heroui/react";
+import { Avatar, Button, Chip, Divider } from "@heroui/react";
+import { Icon } from "@iconify/react";
 import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -43,7 +44,7 @@ function getSession() {
   }
 }
 
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const pathname = usePathname();
 
   const [session, setSession] = useState<ReturnType<typeof getSession>>(null);
@@ -58,10 +59,22 @@ export default function Header() {
     : "??";
 
   return (
-    <header className="flex items-center justify-between px-6 py-3.5 bg-content1 border-b border-divider shrink-0">
+    <header className="flex items-center justify-between gap-3 px-3 sm:px-6 py-3.5 bg-content1 border-b border-divider shrink-0">
       {/* Page title */}
-      <div className="flex items-center gap-3">
-        <h2 className="text-lg font-semibold text-foreground">{pageTitle}</h2>
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <Button
+          isIconOnly
+          aria-label="Mở menu"
+          className="shrink-0 lg:hidden"
+          size="sm"
+          variant="light"
+          onPress={onMenuClick}
+        >
+          <Icon className="text-xl" icon="mdi:menu" />
+        </Button>
+        <h2 className="truncate text-base sm:text-lg font-semibold text-foreground">
+          {pageTitle}
+        </h2>
         <span className="hidden sm:flex items-center gap-1.5 text-xs text-default-500">
           <span className="h-1.5 w-1.5 rounded-full bg-success-500 animate-pulse" />
           Hệ thống hoạt động
@@ -69,14 +82,14 @@ export default function Header() {
       </div>
 
       {/* User info */}
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {roleConfig && (
-          <Chip size="sm" color={roleConfig.color} variant="flat">
+          <Chip className="hidden sm:flex" size="sm" color={roleConfig.color} variant="flat">
             {roleConfig.label}
           </Chip>
         )}
-        <Divider orientation="vertical" className="h-8" />
-        <div className="text-right leading-tight">
+        <Divider orientation="vertical" className="hidden sm:block h-8" />
+        <div className="hidden sm:block text-right leading-tight">
           <p className="text-sm font-medium text-foreground">
             {user?.username ?? "—"}
           </p>

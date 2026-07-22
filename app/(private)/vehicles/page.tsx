@@ -4,6 +4,7 @@ import {
   Autocomplete,
   AutocompleteItem,
   Button,
+  Card,
   Input,
   Modal,
   ModalBody,
@@ -178,7 +179,7 @@ function VehicleFormModal({
                   </AutocompleteItem>
                 ))}
               </Autocomplete>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <VehicleFormFields
                   errors={errors}
                   value={vehicle}
@@ -297,17 +298,17 @@ export default function VehiclesPage() {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:car-outline"
         subtitle="Danh sách phương tiện của quân nhân"
         title="Quản lý Phương tiện"
       />
 
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
           isClearable
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm theo biển số, hãng, hiệu xe..."
           startContent={
             <Icon className="text-default-400" icon="mdi:magnify" />
@@ -317,6 +318,7 @@ export default function VehiclesPage() {
           onValueChange={setKeyword}
         />
         <Button
+          className="w-full sm:w-auto"
           color="primary"
           startContent={<Icon icon="mdi:plus" />}
           onPress={openAdd}
@@ -325,6 +327,7 @@ export default function VehiclesPage() {
         </Button>
       </div>
 
+      <div className="hidden sm:block">
       <Table
         aria-label="Danh sách phương tiện"
         bottomContent={
@@ -419,6 +422,90 @@ export default function VehiclesPage() {
           )}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : vehicles.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            {keyword ? "Không tìm thấy kết quả" : "Chưa có phương tiện nào"}
+          </p>
+        ) : (
+          vehicles.map((v) => (
+            <Card key={v.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">
+                    {personnelName(v.personnelId)}
+                  </p>
+                  <p className="text-xs text-default-400 font-mono">
+                    {v.licensePlate}
+                  </p>
+                </div>
+                {v.imageUrls?.[0] ? (
+                  <img
+                    alt="Ảnh phương tiện"
+                    className="w-12 h-12 shrink-0 object-cover rounded"
+                    src={resolveImageUrl(v.imageUrls[0]) ?? undefined}
+                  />
+                ) : null}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-default-500">
+                <p>
+                  Loại xe:{" "}
+                  <span className="text-foreground">
+                    {vehicleTypeLabel(v.vehicleType)}
+                  </span>
+                </p>
+                <p>
+                  Hãng/Hiệu:{" "}
+                  <span className="text-foreground">
+                    {v.brand} {v.model}
+                  </span>
+                </p>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  className="flex-1"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => openEdit(v)}
+                >
+                  Sửa
+                </Button>
+                <Button
+                  className="flex-1"
+                  color="danger"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => openDelete(v)}
+                >
+                  Xóa
+                </Button>
+              </div>
+            </Card>
+          ))
+        )}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center pt-2">
+            <Pagination
+              isCompact
+              showControls
+              showShadow
+              color="primary"
+              page={page}
+              total={totalPages}
+              onChange={setPage}
+            />
+          </div>
+        )}
+      </div>
 
       <VehicleFormModal
         editing={editing}

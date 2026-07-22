@@ -168,7 +168,7 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
           >
             <ModalHeader>Thêm quân nhân mới</ModalHeader>
             <ModalBody className="gap-4 min-h-0 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Left column */}
                 <div className="space-y-3">
                   <p className="font-medium text-xs text-default-500 uppercase">
@@ -334,7 +334,7 @@ export const AddSoldierModal: React.FC<AddSoldierModalProps> = ({
                 </div>
 
                 {hasVehicle && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <VehicleFormFields
                       errors={{
                         vehicleType: errors.vehicle?.vehicleType?.message,

@@ -169,7 +169,7 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
       <PageHeader
         icon="mdi:qrcode-scan"
         title="Kiểm soát cổng — Quét QR"

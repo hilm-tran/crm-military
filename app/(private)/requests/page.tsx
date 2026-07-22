@@ -8,6 +8,7 @@ import {
 } from "@/hooks/use-leave-request";
 import {
   Button,
+  Card,
   Chip,
   DateInput,
   Input,
@@ -117,7 +118,7 @@ function CreateLeaveModal({ isOpen, onOpenChange, onSuccess }: CreateModalProps)
           <>
             <ModalHeader>Tạo đơn nghỉ phép</ModalHeader>
             <ModalBody className="gap-3">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <DateInput
                   label="Ngày bắt đầu"
                   value={leaveFrom}
@@ -323,7 +324,7 @@ function DetailModal({ isOpen, onOpenChange, request }: DetailModalProps) {
             <ModalHeader>Chi tiết đơn nghỉ phép</ModalHeader>
             <ModalBody className="gap-4">
               {/* Request info */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
                   <span className="text-default-500">Thời gian nghỉ:</span>
                   <p className="font-medium">
@@ -512,187 +513,260 @@ export default function RequestPage() {
   const skeletonRows = Array.from({ length: 4 });
 
   // ── Pending table ──────────────────────────────────────────────────────────
+  const PendingActions = ({ req }: { req: LeaveRequest }) => (
+    <div className="flex gap-1 flex-wrap">
+      <Button size="sm" variant="flat" onPress={() => openDetail(req)}>
+        Chi tiết
+      </Button>
+      <Button
+        size="sm"
+        color="default"
+        variant="flat"
+        onPress={() => handleAccept(req.id)}
+      >
+        Tiếp nhận
+      </Button>
+      <Button
+        size="sm"
+        color="success"
+        variant="flat"
+        onPress={() => openApprove(req.id)}
+      >
+        Duyệt
+      </Button>
+      <Button
+        size="sm"
+        color="danger"
+        variant="flat"
+        onPress={() => openReturn(req.id)}
+      >
+        Trả về
+      </Button>
+      <Button
+        size="sm"
+        color="warning"
+        variant="flat"
+        onPress={() => handleSubmitNext(req.id)}
+      >
+        Trình tiếp
+      </Button>
+    </div>
+  );
+
   const PendingTable = () => (
-    <Table aria-label="Đơn chờ duyệt">
-      <TableHeader>
-        <TableColumn>STT</TableColumn>
-        <TableColumn>NHÂN SỰ</TableColumn>
-        <TableColumn>THỜI GIAN</TableColumn>
-        <TableColumn>SỐ LẦN RA</TableColumn>
-        <TableColumn>VÒNG</TableColumn>
-        <TableColumn>TRẠNG THÁI</TableColumn>
-        <TableColumn>HÀNH ĐỘNG</TableColumn>
-      </TableHeader>
-      <TableBody>
-        {isLoading
-          ? skeletonRows.map((_, i) => (
-              <TableRow key={i}>
-                {Array.from({ length: 7 }).map((__, j) => (
-                  <TableCell key={j}>
-                    <Skeleton className="h-4 w-full rounded" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          : pendingRequests.length === 0
-            ? (
-              <TableRow>
-                <TableCell className="text-center text-default-400 py-8" colSpan={7}>
-                  Không có đơn chờ duyệt
-                </TableCell>
-              </TableRow>
-            )
-            : pendingRequests.map((req, i) => (
-                <TableRow key={req.id}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>
-                    {(req as any).militaryPersonnel?.fullName ?? req.militaryPersonnelId}
-                  </TableCell>
-                  <TableCell>
-                    {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
-                  </TableCell>
-                  <TableCell>{req.allowedOutCount}</TableCell>
-                  <TableCell>{req.currentRound}</TableCell>
-                  <TableCell>
-                    <StatusChip status={req.status} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="flat"
-                        onPress={() => openDetail(req)}
-                      >
-                        Chi tiết
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="default"
-                        variant="flat"
-                        onPress={() => handleAccept(req.id)}
-                      >
-                        Tiếp nhận
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="success"
-                        variant="flat"
-                        onPress={() => openApprove(req.id)}
-                      >
-                        Duyệt
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="danger"
-                        variant="flat"
-                        onPress={() => openReturn(req.id)}
-                      >
-                        Trả về
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="warning"
-                        variant="flat"
-                        onPress={() => handleSubmitNext(req.id)}
-                      >
-                        Trình tiếp
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-      </TableBody>
-    </Table>
+    <>
+      <div className="hidden sm:block">
+        <Table aria-label="Đơn chờ duyệt">
+          <TableHeader>
+            <TableColumn>STT</TableColumn>
+            <TableColumn>NHÂN SỰ</TableColumn>
+            <TableColumn>THỜI GIAN</TableColumn>
+            <TableColumn>SỐ LẦN RA</TableColumn>
+            <TableColumn>VÒNG</TableColumn>
+            <TableColumn>TRẠNG THÁI</TableColumn>
+            <TableColumn>HÀNH ĐỘNG</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {isLoading
+              ? skeletonRows.map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 7 }).map((__, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4 w-full rounded" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              : pendingRequests.length === 0
+                ? (
+                  <TableRow>
+                    <TableCell className="text-center text-default-400 py-8" colSpan={7}>
+                      Không có đơn chờ duyệt
+                    </TableCell>
+                  </TableRow>
+                )
+                : pendingRequests.map((req, i) => (
+                    <TableRow key={req.id}>
+                      <TableCell>{i + 1}</TableCell>
+                      <TableCell>
+                        {(req as any).militaryPersonnel?.fullName ?? req.militaryPersonnelId}
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
+                      </TableCell>
+                      <TableCell>{req.allowedOutCount}</TableCell>
+                      <TableCell>{req.currentRound}</TableCell>
+                      <TableCell>
+                        <StatusChip status={req.status} />
+                      </TableCell>
+                      <TableCell>
+                        <PendingActions req={req} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          skeletonRows.map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : pendingRequests.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            Không có đơn chờ duyệt
+          </p>
+        ) : (
+          pendingRequests.map((req) => (
+            <Card key={req.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium min-w-0 truncate">
+                  {(req as any).militaryPersonnel?.fullName ?? req.militaryPersonnelId}
+                </p>
+                <StatusChip status={req.status} />
+              </div>
+              <div className="mt-2 text-xs text-default-500 space-y-0.5">
+                <p>
+                  Thời gian: {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
+                </p>
+                <p>
+                  Số lần ra: {req.allowedOutCount} · Vòng: {req.currentRound}
+                </p>
+              </div>
+              <div className="mt-3">
+                <PendingActions req={req} />
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+    </>
   );
 
   // ── My requests table ──────────────────────────────────────────────────────
+  const MyActions = ({ req }: { req: LeaveRequest }) => (
+    <div className="flex gap-1 flex-wrap">
+      <Button size="sm" variant="flat" onPress={() => openDetail(req)}>
+        Chi tiết
+      </Button>
+      {req.status === "TRA_VE" && (
+        <Button
+          size="sm"
+          color="primary"
+          variant="flat"
+          onPress={() => handleResubmit(req.id)}
+        >
+          Trình lại
+        </Button>
+      )}
+      {req.status === "DA_DUYET" && (
+        <Button
+          size="sm"
+          color="warning"
+          variant="flat"
+          onPress={() => handleSupplement(req)}
+        >
+          Bổ sung
+        </Button>
+      )}
+    </div>
+  );
+
   const MyTable = () => (
-    <Table aria-label="Đơn của tôi">
-      <TableHeader>
-        <TableColumn>STT</TableColumn>
-        <TableColumn>THỜI GIAN</TableColumn>
-        <TableColumn>SỐ LẦN RA / ĐÃ RA</TableColumn>
-        <TableColumn>VÒNG</TableColumn>
-        <TableColumn>TRẠNG THÁI</TableColumn>
-        <TableColumn>HÀNH ĐỘNG</TableColumn>
-      </TableHeader>
-      <TableBody>
-        {isLoading
-          ? skeletonRows.map((_, i) => (
-              <TableRow key={i}>
-                {Array.from({ length: 6 }).map((__, j) => (
-                  <TableCell key={j}>
-                    <Skeleton className="h-4 w-full rounded" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          : myRequests.length === 0
-            ? (
-              <TableRow>
-                <TableCell className="text-center text-default-400 py-8" colSpan={6}>
-                  Chưa có đơn nào
-                </TableCell>
-              </TableRow>
-            )
-            : myRequests.map((req, i) => (
-                <TableRow key={req.id}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>
-                    {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
-                  </TableCell>
-                  <TableCell>
-                    {req.allowedOutCount} / {req.usedOutCount ?? 0}
-                  </TableCell>
-                  <TableCell>{req.currentRound}</TableCell>
-                  <TableCell>
-                    <StatusChip status={req.status} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="flat"
-                        onPress={() => openDetail(req)}
-                      >
-                        Chi tiết
-                      </Button>
-                      {req.status === "TRA_VE" && (
-                        <Button
-                          size="sm"
-                          color="primary"
-                          variant="flat"
-                          onPress={() => handleResubmit(req.id)}
-                        >
-                          Trình lại
-                        </Button>
-                      )}
-                      {req.status === "DA_DUYET" && (
-                        <Button
-                          size="sm"
-                          color="warning"
-                          variant="flat"
-                          onPress={() => handleSupplement(req)}
-                        >
-                          Bổ sung
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-      </TableBody>
-    </Table>
+    <>
+      <div className="hidden sm:block">
+        <Table aria-label="Đơn của tôi">
+          <TableHeader>
+            <TableColumn>STT</TableColumn>
+            <TableColumn>THỜI GIAN</TableColumn>
+            <TableColumn>SỐ LẦN RA / ĐÃ RA</TableColumn>
+            <TableColumn>VÒNG</TableColumn>
+            <TableColumn>TRẠNG THÁI</TableColumn>
+            <TableColumn>HÀNH ĐỘNG</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {isLoading
+              ? skeletonRows.map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4 w-full rounded" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              : myRequests.length === 0
+                ? (
+                  <TableRow>
+                    <TableCell className="text-center text-default-400 py-8" colSpan={6}>
+                      Chưa có đơn nào
+                    </TableCell>
+                  </TableRow>
+                )
+                : myRequests.map((req, i) => (
+                    <TableRow key={req.id}>
+                      <TableCell>{i + 1}</TableCell>
+                      <TableCell>
+                        {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
+                      </TableCell>
+                      <TableCell>
+                        {req.allowedOutCount} / {req.usedOutCount ?? 0}
+                      </TableCell>
+                      <TableCell>{req.currentRound}</TableCell>
+                      <TableCell>
+                        <StatusChip status={req.status} />
+                      </TableCell>
+                      <TableCell>
+                        <MyActions req={req} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          skeletonRows.map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : myRequests.length === 0 ? (
+          <p className="text-center text-default-400 py-8">Chưa có đơn nào</p>
+        ) : (
+          myRequests.map((req) => (
+            <Card key={req.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-medium">
+                  {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
+                </p>
+                <StatusChip status={req.status} />
+              </div>
+              <p className="mt-2 text-xs text-default-500">
+                Số lần ra/đã ra: {req.allowedOutCount} / {req.usedOutCount ?? 0} · Vòng: {req.currentRound}
+              </p>
+              <div className="mt-3">
+                <MyActions req={req} />
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+    </>
   );
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:file-document-edit-outline"
         title="Quản lý nghỉ phép"
         subtitle="Theo dõi, trình và phê duyệt đơn nghỉ phép"
         action={
-          <Button color="primary" onPress={createModal.onOpen} startContent={<Icon icon="mdi:plus" />}>
+          <Button className="w-full sm:w-auto" color="primary" onPress={createModal.onOpen} startContent={<Icon icon="mdi:plus" />}>
             Tạo đơn nghỉ phép
           </Button>
         }

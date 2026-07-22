@@ -78,7 +78,12 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
@@ -89,7 +94,19 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="relative w-72 min-h-screen flex flex-col bg-gradient-to-b from-[#20281a] to-[#14170f] text-white shrink-0">
+    <>
+      {isOpen && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 min-h-screen flex flex-col bg-gradient-to-b from-[#20281a] to-[#14170f] text-white shrink-0 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
       {/* Brand */}
       <div className="relative overflow-hidden border-b border-white/10 bg-tactical-grid">
         <div className="relative flex items-center gap-3 px-5 py-5">
@@ -99,14 +116,24 @@ export default function Sidebar() {
               icon="mdi:shield-star-outline"
             />
           </div>
-          <div>
-            <h1 className="text-base font-bold tracking-wide">
+          <div className="min-w-0">
+            <h1 className="text-base font-bold tracking-wide truncate">
               MILITARY MANAGER
             </h1>
-            <p className="text-[11px] text-white/50 tracking-wide">
+            <p className="text-[11px] text-white/50 tracking-wide truncate">
               Hệ thống quản lý doanh trại
             </p>
           </div>
+          <Button
+            isIconOnly
+            aria-label="Đóng menu"
+            className="ml-auto shrink-0 text-white/70 lg:hidden"
+            size="sm"
+            variant="light"
+            onPress={onClose}
+          >
+            <Icon icon="mdi:close" />
+          </Button>
         </div>
       </div>
 
@@ -132,6 +159,7 @@ export default function Sidebar() {
                         : "text-white/65 hover:bg-white/5 hover:text-white"
                     }`}
                     href={item.href}
+                    onClick={onClose}
                   >
                     <span
                       className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-secondary-400 transition-opacity ${
@@ -162,6 +190,7 @@ export default function Sidebar() {
           Đăng xuất
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

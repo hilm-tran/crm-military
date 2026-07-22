@@ -6,7 +6,7 @@ import { Suspense } from "react";
 
 export default function SoldierPage() {
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:shield-account-outline"
         title="Danh sách quân nhân"

@@ -5,6 +5,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { MilitaryUnit, useUnit } from "@/hooks/use-unit";
 import {
   Button,
+  Card,
   Input,
   Modal,
   ModalBody,
@@ -252,16 +253,16 @@ export default function UnitsPage() {
   const openDelete = (u: MilitaryUnit) => { setDeleting(u); deleteModal.onOpen(); };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:office-building-marker-outline"
         title="Quản lý Đơn vị"
         subtitle="Danh sách đơn vị"
       />
 
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm theo tên, mã..."
           value={keyword}
           onValueChange={setKeyword}
@@ -269,11 +270,12 @@ export default function UnitsPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
+        <Button className="w-full sm:w-auto" color="primary" onPress={openAdd} startContent={<Icon icon="mdi:plus" />}>
           Thêm đơn vị
         </Button>
       </div>
 
+      <div className="hidden sm:block">
       <Table
         aria-label="Danh sách đơn vị"
         bottomContent={
@@ -338,6 +340,48 @@ export default function UnitsPage() {
                 ))}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : units.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            {keyword ? "Không tìm thấy kết quả" : "Chưa có đơn vị nào"}
+          </p>
+        ) : (
+          units.map((u) => (
+            <Card key={String(u.id)} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{u.unitName}</p>
+                  <p className="text-xs text-default-400 font-mono">{u.unitCode}</p>
+                </div>
+                {u.logoUrl ? (
+                  <img src={u.logoUrl} alt="logo" className="w-10 h-10 shrink-0 object-cover rounded" />
+                ) : null}
+              </div>
+              {u.address && (
+                <p className="mt-2 text-xs text-default-500">{u.address}</p>
+              )}
+              <div className="mt-3 flex gap-2">
+                <Button className="flex-1" size="sm" variant="flat" onPress={() => openEdit(u)}>Sửa</Button>
+                <Button className="flex-1" size="sm" variant="flat" color="danger" onPress={() => openDelete(u)}>Xóa</Button>
+              </div>
+            </Card>
+          ))
+        )}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center pt-2">
+            <Pagination isCompact showControls showShadow color="primary" page={page} total={totalPages} onChange={setPage} />
+          </div>
+        )}
+      </div>
 
       <UnitFormModal
         isOpen={formModal.isOpen}

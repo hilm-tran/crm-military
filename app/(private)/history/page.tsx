@@ -5,6 +5,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { LeaveRequest, useLeaveRequest } from "@/hooks/use-leave-request";
 import {
   Button,
+  Card,
   Chip,
   Input,
   Pagination,
@@ -96,16 +97,16 @@ export default function HistoryPage() {
   useEffect(() => { setPage(1); }, [debouncedKeyword]);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <PageHeader
         icon="mdi:history"
         title="Lịch sử ra vào cổng"
         subtitle="Nhật ký xử lý đơn nghỉ phép qua cổng doanh trại"
       />
 
-      <div className="flex gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
         <Input
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
           placeholder="Tìm kiếm..."
           value={keyword}
           onValueChange={setKeyword}
@@ -113,11 +114,12 @@ export default function HistoryPage() {
           isClearable
           onClear={() => setKeyword("")}
         />
-        <Button variant="flat" onPress={loadData} startContent={<Icon icon="mdi:refresh" />}>
+        <Button className="w-full sm:w-auto" variant="flat" onPress={loadData} startContent={<Icon icon="mdi:refresh" />}>
           Làm mới
         </Button>
       </div>
 
+      <div className="hidden sm:block">
       <Table
         aria-label="Lịch sử ra vào"
         bottomContent={
@@ -177,6 +179,49 @@ export default function HistoryPage() {
                 ))}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <Skeleton className="h-4 w-full rounded" />
+            </Card>
+          ))
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-default-400 py-8">
+            {keyword ? "Không tìm thấy kết quả" : "Chưa có dữ liệu"}
+          </p>
+        ) : (
+          filtered.map((req) => (
+            <Card key={req.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium truncate">
+                  {req.currentAssignee ?? "—"}
+                </p>
+                <Chip
+                  size="sm"
+                  color={STATUS_COLOR[req.status] ?? "default"}
+                  variant="flat"
+                >
+                  {STATUS_LABEL[req.status] ?? req.status}
+                </Chip>
+              </div>
+              <div className="mt-2 text-xs text-default-500 space-y-0.5">
+                <p>
+                  Nghỉ: {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
+                </p>
+                <p>
+                  Số lần ra: {req.usedOutCount ?? 0} / {req.allowedOutCount}
+                </p>
+                {req.reason && <p>Lý do: {req.reason}</p>}
+                <p>Ngày tạo: {formatDateTime(req.createdAt)}</p>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 }
