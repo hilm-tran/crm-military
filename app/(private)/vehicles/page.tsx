@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Autocomplete,
+  AutocompleteItem,
   Button,
   Input,
   Modal,
@@ -28,6 +30,7 @@ import {
   VehicleFormFields,
 } from "@/components/VehicleFormFields";
 import { VehicleImagesUpload } from "@/components/VehicleImagesUpload";
+import { useCombobox, UserOption } from "@/hooks/use-combobox";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   VEHICLE_TYPE_OPTIONS,
@@ -71,7 +74,9 @@ function VehicleFormModal({
   onSuccess,
 }: FormModalProps) {
   const { attachVehicle, updateVehicle } = useVehicle();
-  const [personnelId, setPersonnelId] = useState("");
+  const { getUsers } = useCombobox();
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [personnelId, setPersonnelId] = useState<string | null>(null);
   const [vehicle, setVehicle] = useState<VehicleFieldsValue>(EMPTY_VEHICLE);
   const [imagePaths, setImagePaths] = useState<string[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -82,6 +87,7 @@ function VehicleFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    getUsers().then(setUsers);
     if (editing) {
       setPersonnelId(String(editing.personnelId));
       setVehicle({
@@ -93,13 +99,13 @@ function VehicleFormModal({
       setImagePaths(editing.imageUrls.map(filenameFromImageUrl));
       setImageUrls(editing.imageUrls);
     } else {
-      setPersonnelId("");
+      setPersonnelId(null);
       setVehicle(EMPTY_VEHICLE);
       setImagePaths([]);
       setImageUrls([]);
     }
     setErrors({});
-  }, [isOpen, editing]);
+  }, [isOpen, editing, getUsers]);
 
   const handleSubmit = async (onClose: () => void) => {
     const nextErrors: Partial<Record<keyof VehicleFieldsValue, string>> = {};
@@ -112,7 +118,7 @@ function VehicleFormModal({
 
       return;
     }
-    if (!editing && !personnelId.trim()) return;
+    if (!editing && !personnelId) return;
 
     const payload = {
       vehicleType: vehicle.vehicleType,
@@ -151,20 +157,27 @@ function VehicleFormModal({
               {editing ? "Sửa phương tiện" : "Thêm phương tiện"}
             </ModalHeader>
             <ModalBody className="gap-4">
-              <Input
+              <Autocomplete
                 isRequired
                 description={
                   editing
                     ? undefined
-                    : "Nhập ID quân nhân sẽ được gán phương tiện này"
+                    : "Chọn quân nhân sẽ được gán phương tiện này"
                 }
                 isDisabled={!!editing}
-                label="ID Quân nhân"
-                placeholder="VD: 12"
-                type="number"
-                value={personnelId}
-                onValueChange={setPersonnelId}
-              />
+                label="Quân nhân"
+                placeholder="Tìm và chọn quân nhân..."
+                selectedKey={personnelId}
+                onSelectionChange={(key) =>
+                  setPersonnelId(key ? String(key) : null)
+                }
+              >
+                {users.map((u) => (
+                  <AutocompleteItem key={String(u.code)}>
+                    {u.name}
+                  </AutocompleteItem>
+                ))}
+              </Autocomplete>
               <div className="grid grid-cols-2 gap-4">
                 <VehicleFormFields
                   errors={errors}
@@ -190,7 +203,7 @@ function VehicleFormModal({
               </Button>
               <Button
                 color="primary"
-                isDisabled={!editing && !personnelId.trim()}
+                isDisabled={!editing && !personnelId}
                 isLoading={isSubmitting}
                 onPress={() => handleSubmit(onClose)}
               >
@@ -208,6 +221,8 @@ function VehicleFormModal({
 
 export default function VehiclesPage() {
   const { getVehicles, deleteVehicle } = useVehicle();
+  const { getUsers } = useCombobox();
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
@@ -246,6 +261,13 @@ export default function VehiclesPage() {
   useEffect(() => {
     load();
   }, [load]);
+  useEffect(() => {
+    getUsers().then(setUsers);
+  }, [getUsers]);
+
+  const personnelName = (personnelId: number) =>
+    users.find((u) => String(u.code) === String(personnelId))?.name ??
+    String(personnelId);
 
   const openAdd = () => {
     setEditing(null);
@@ -323,7 +345,7 @@ export default function VehiclesPage() {
       >
         <TableHeader>
           <TableColumn>STT</TableColumn>
-          <TableColumn>ID QUÂN NHÂN</TableColumn>
+          <TableColumn>QUÂN NHÂN</TableColumn>
           <TableColumn>LOẠI XE</TableColumn>
           <TableColumn>HÃNG</TableColumn>
           <TableColumn>HIỆU</TableColumn>
@@ -355,7 +377,7 @@ export default function VehiclesPage() {
             vehicles.map((v, i) => (
               <TableRow key={v.id}>
                 <TableCell>{(page - 1) * PAGE_SIZE + i + 1}</TableCell>
-                <TableCell>{v.personnelId}</TableCell>
+                <TableCell>{personnelName(v.personnelId)}</TableCell>
                 <TableCell>{vehicleTypeLabel(v.vehicleType)}</TableCell>
                 <TableCell>{v.brand}</TableCell>
                 <TableCell>{v.model}</TableCell>

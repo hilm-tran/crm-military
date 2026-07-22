@@ -130,10 +130,11 @@ function ManageUsersModal({ isOpen, onOpenChange, group, onSuccess }: ManageUser
   }, [isOpen, getUsers]);
 
   const userName = (uid: string) =>
-    users.find((u) => u.code === uid)?.name ?? uid;
+    users.find((u) => String(u.code) === String(uid))?.name ?? String(uid);
 
+  const currentUserIds = (group?.userIds ?? []).map(String);
   const availableUsers = users.filter(
-    (u) => !(group?.userIds ?? []).includes(u.code),
+    (u) => !currentUserIds.includes(String(u.code)),
   );
 
   const handleAdd = async () => {
@@ -301,8 +302,10 @@ export default function SubmissionGroupsPage() {
         : list;
       setTotalPages(Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
       setGroups(filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+      return list;
     } catch {
       setGroups([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -315,6 +318,11 @@ export default function SubmissionGroupsPage() {
   const openEdit = (g: SubmissionGroup) => { setEditing(g); formModal.onOpen(); };
   const openDelete = (g: SubmissionGroup) => { setDeleting(g); deleteModal.onOpen(); };
   const openManage = (g: SubmissionGroup) => { setManaging(g); manageModal.onOpen(); };
+
+  const refreshManaging = useCallback(async () => {
+    const list = await load();
+    setManaging((prev) => (prev ? list.find((g) => g.id === prev.id) ?? prev : prev));
+  }, [load]);
 
   return (
     <div className="p-6 space-y-4">
@@ -403,7 +411,7 @@ export default function SubmissionGroupsPage() {
         isOpen={manageModal.isOpen}
         onOpenChange={manageModal.onOpenChange}
         group={managing}
-        onSuccess={load}
+        onSuccess={refreshManaging}
       />
       <DeleteModal
         isOpen={deleteModal.isOpen}
