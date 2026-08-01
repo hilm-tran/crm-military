@@ -18,6 +18,7 @@ export const useAuth = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept-Language": "vi",
         },
         body: JSON.stringify(data),
       });
@@ -58,6 +59,9 @@ export const useAuth = () => {
     try {
       await fetch(`${BASE_API}/api/auth/signout`, {
         method: "POST",
+        headers: {
+          "Accept-Language": "vi",
+        },
       });
     } catch (error) {
       console.error("Sign-out API Error:", error);

@@ -36,6 +36,7 @@ export const apiClient = {
     }
 
     const headers = new Headers(options.headers);
+    headers.set("Accept-Language", "vi");
     if (token) {
       headers.set("Authorization", `${tokenType} ${token}`);
     }
