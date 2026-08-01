@@ -1,11 +1,20 @@
 "use client";
 
-import { PageHeader } from "@/components/PageHeader";
-import { useQRScan } from "@/hooks/use-qr-scan";
-import { Button, Card, CardBody, Chip, Spinner, Textarea } from "@heroui/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  Chip,
+  Input,
+  Spinner,
+  Textarea,
+} from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { Html5Qrcode } from "html5-qrcode";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+
+import { useQRScan } from "@/hooks/use-qr-scan";
+import { PageHeader } from "@/components/PageHeader";
 
 type ScanState = "idle" | "scanning" | "processing" | "result";
 
@@ -43,6 +52,50 @@ const STATUS_CONFIG = {
 
 const SCANNER_ID = "qr-scanner-container";
 
+// A mis-configured HID scanner on macOS sends digits as Option+digit symbols.
+// This map is deterministic and these symbols never appear in valid QR/CCCD
+// payloads, so reversing it is safe.
+const OPTION_DIGIT: Record<string, string> = {
+  º: "0",
+  "¡": "1",
+  "™": "2",
+  "£": "3",
+  "¢": "4",
+  "∞": "5",
+  "§": "6",
+  "¶": "7",
+  "•": "8",
+  ª: "9",
+};
+
+const fixDigits = (s: string) =>
+  s.replace(/[º¡™£¢∞§¶•ª]/g, (c) => OPTION_DIGIT[c] ?? c);
+
+// DDMMYYYY -> YYYY-MM-DD (CCCD dates); pass through anything else.
+const cccdDateToISO = (d: string) =>
+  /^\d{8}$/.test(d) ? `${d.slice(4)}-${d.slice(2, 4)}-${d.slice(0, 2)}` : d;
+
+// Vietnamese CCCD QR payload: cccd|cmnd|name|dob|gender|address|issueDate
+function parseCCCD(raw: string) {
+  const [
+    citizenId = "",
+    ,
+    name = "",
+    dob = "",
+    ,
+    address = "",
+    issueDate = "",
+  ] = raw.split("|");
+
+  return {
+    citizenId: citizenId.trim(),
+    name: name.trim(),
+    birthday: cccdDateToISO(dob.trim()),
+    address: address.trim(),
+    issueDate: cccdDateToISO(issueDate.trim()),
+  };
+}
+
 export default function ScanPage() {
   const { scanQR, approveQRScan, rejectQRScan } = useQRScan();
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -51,11 +104,14 @@ export default function ScanPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [manualInput, setManualInput] = useState("");
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [scanInput, setScanInput] = useState("");
+  const scannerInputRef = useRef<HTMLInputElement>(null);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
       try {
         const scannerState = scannerRef.current.getState();
+
         // State 2 = SCANNING, State 3 = PAUSED
         if (scannerState === 2 || scannerState === 3) {
           await scannerRef.current.stop();
@@ -73,18 +129,34 @@ export default function ScanPage() {
       await stopScanner();
 
       try {
+        const value = fixDigits(rawValue.trim());
+
         let parsed: any;
-        try {
-          parsed = JSON.parse(rawValue);
-        } catch {
-          throw new Error("Dữ liệu QR không phải JSON hợp lệ");
+        let isMilitary = false;
+        let isCitizen = false;
+
+        if (value.startsWith("{")) {
+          try {
+            parsed = JSON.parse(value);
+          } catch {
+            throw new Error("Dữ liệu QR không phải JSON hợp lệ");
+          }
+          isMilitary =
+            "qrCode" in parsed ||
+            "unitCode" in parsed ||
+            "rankCode" in parsed ||
+            "code" in parsed;
+          isCitizen = "citizenId" in parsed || "citizenid" in parsed;
+        } else if (value.includes("|")) {
+          // Thẻ CCCD: các trường ngăn cách bằng "|"
+          parsed = parseCCCD(value);
+          isCitizen = true;
         }
 
-        const isMilitary = "qrCode" in parsed || "unitCode" in parsed || "rankCode" in parsed || "code" in parsed;
-        const isCitizen = "citizenId" in parsed || "citizenid" in parsed;
-
         if (!isMilitary && !isCitizen) {
-          throw new Error("Không nhận dạng được loại QR (quân nhân / người dân)");
+          throw new Error(
+            "Không nhận dạng được dữ liệu (không phải QR quân nhân / CCCD)",
+          );
         }
 
         const response = isMilitary
@@ -96,7 +168,11 @@ export default function ScanPage() {
           status: res.status,
           reason: res.reason,
           type: res.scanType ?? (isMilitary ? "MILITARY_PERSONNEL" : "CITIZEN"),
-          name: res.militaryPersonnelFullName ?? res.citizenName ?? parsed.fullName ?? parsed.name,
+          name:
+            res.militaryPersonnelFullName ??
+            res.citizenName ??
+            parsed.fullName ??
+            parsed.name,
           logId: res.id,
         });
         setState("result");
@@ -122,31 +198,47 @@ export default function ScanPage() {
 
     try {
       const scanner = new Html5Qrcode(SCANNER_ID);
+
       scannerRef.current = scanner;
 
       const cameras = await Html5Qrcode.getCameras();
+
       if (!cameras || cameras.length === 0) {
         throw new Error("Không tìm thấy camera");
       }
 
       // Prefer rear camera
-      const camera = cameras.find((c) => /back|rear|environment/i.test(c.label)) ?? cameras[cameras.length - 1];
+      const camera =
+        cameras.find((c) => /back|rear|environment/i.test(c.label)) ??
+        cameras[cameras.length - 1];
 
       await scanner.start(
         camera.id,
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
-        (decodedText) => { processQRData(decodedText); },
-        () => { /* scan failure - keep trying */ },
+        (decodedText) => {
+          processQRData(decodedText);
+        },
+        () => {
+          /* scan failure - keep trying */
+        },
       );
     } catch (err: any) {
       await stopScanner();
       setState("idle");
-      setCameraError(err.message || "Không thể mở camera. Kiểm tra quyền truy cập và dùng HTTPS/localhost.");
+      setCameraError(
+        err.message ||
+          "Không thể mở camera. Kiểm tra quyền truy cập và dùng HTTPS/localhost.",
+      );
     }
   }, [processQRData, stopScanner]);
 
   // Cleanup on unmount
-  useEffect(() => () => { stopScanner(); }, [stopScanner]);
+  useEffect(
+    () => () => {
+      stopScanner();
+    },
+    [stopScanner],
+  );
 
   const handleReset = useCallback(async () => {
     await stopScanner();
@@ -155,6 +247,26 @@ export default function ScanPage() {
     setManualInput("");
     setCameraError(null);
   }, [stopScanner]);
+
+  // Hardware barcode/QR scanner acts as a keyboard: it "types" the decoded
+  // value then sends Enter → this submits the focused input.
+  const handleScannerSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
+      const value = scanInput.trim();
+
+      if (!value) return;
+      setScanInput("");
+      processQRData(value);
+    },
+    [scanInput, processQRData],
+  );
+
+  // Keep the scanner input focused whenever we're idle so a scan is captured
+  // without the operator having to click first.
+  useEffect(() => {
+    if (state === "idle") scannerInputRef.current?.focus();
+  }, [state]);
 
   const handleApprove = async () => {
     if (!result?.logId) return;
@@ -172,42 +284,65 @@ export default function ScanPage() {
     <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
       <PageHeader
         icon="mdi:qrcode-scan"
-        title="Kiểm soát cổng — Quét QR"
         subtitle="Quét mã QR để xác nhận ra/vào doanh trại"
+        title="Kiểm soát cổng — Quét QR"
       />
 
       {/* Result */}
       {state === "result" && result && (
-        <Card className={`border-2 ${STATUS_CONFIG[result.status]?.bg ?? "bg-default-50"}`}>
+        <Card
+          className={`border-2 ${STATUS_CONFIG[result.status]?.bg ?? "bg-default-50"}`}
+        >
           <CardBody className="space-y-4 p-6">
             <div className="flex items-center gap-3">
               <Icon
-                icon={STATUS_CONFIG[result.status]?.icon ?? "mdi:help-circle-outline"}
                 className={`text-4xl ${STATUS_CONFIG[result.status]?.iconClass ?? "text-default-400"}`}
+                icon={
+                  STATUS_CONFIG[result.status]?.icon ??
+                  "mdi:help-circle-outline"
+                }
               />
               <div>
-                <Chip size="lg" color={STATUS_CONFIG[result.status]?.color ?? "default"} variant="flat">
+                <Chip
+                  color={STATUS_CONFIG[result.status]?.color ?? "default"}
+                  size="lg"
+                  variant="flat"
+                >
                   {STATUS_CONFIG[result.status]?.label ?? result.status}
                 </Chip>
-                {result.name && <p className="mt-1 font-semibold text-lg">{result.name}</p>}
+                {result.name && (
+                  <p className="mt-1 font-semibold text-lg">{result.name}</p>
+                )}
                 <p className="text-sm text-default-500">
-                  {result.type === "MILITARY_PERSONNEL" ? "Quân nhân" : result.type === "CITIZEN" ? "Người dân" : ""}
+                  {result.type === "MILITARY_PERSONNEL"
+                    ? "Quân nhân"
+                    : result.type === "CITIZEN"
+                      ? "Người dân"
+                      : ""}
                 </p>
               </div>
             </div>
 
             {result.reason && (
-              <p className="text-sm text-default-600 bg-content1 rounded p-2 border border-divider">Lý do: {result.reason}</p>
+              <p className="text-sm text-default-600 bg-content1 rounded p-2 border border-divider">
+                Lý do: {result.reason}
+              </p>
             )}
 
             {result.type === "CITIZEN" && result.status === "DANG_XU_LY" && (
               <div className="flex gap-2">
-                <Button color="success" onPress={handleApprove}>Cho vào</Button>
-                <Button color="danger" variant="flat" onPress={handleReject}>Từ chối</Button>
+                <Button color="success" onPress={handleApprove}>
+                  Cho vào
+                </Button>
+                <Button color="danger" variant="flat" onPress={handleReject}>
+                  Từ chối
+                </Button>
               </div>
             )}
 
-            <Button variant="flat" onPress={handleReset} className="w-full">Quét tiếp</Button>
+            <Button className="w-full" variant="flat" onPress={handleReset}>
+              Quét tiếp
+            </Button>
           </CardBody>
         </Card>
       )}
@@ -216,10 +351,20 @@ export default function ScanPage() {
       {state === "scanning" && (
         <Card>
           <CardBody className="p-4 space-y-3">
-            <p className="text-sm text-default-500 text-center">Đưa mã QR vào khung để quét tự động</p>
+            <p className="text-sm text-default-500 text-center">
+              Đưa mã QR vào khung để quét tự động
+            </p>
             {/* html5-qrcode renders into this div */}
-            <div id={SCANNER_ID} className="w-full rounded-lg overflow-hidden" />
-            <Button variant="flat" color="danger" className="w-full" onPress={handleReset}>
+            <div
+              className="w-full rounded-lg overflow-hidden"
+              id={SCANNER_ID}
+            />
+            <Button
+              className="w-full"
+              color="danger"
+              variant="flat"
+              onPress={handleReset}
+            >
               Dừng quét
             </Button>
           </CardBody>
@@ -239,14 +384,52 @@ export default function ScanPage() {
       {/* Idle */}
       {state === "idle" && (
         <div className="space-y-4">
+          {/* Hardware barcode/QR scanner (keyboard wedge) — primary at the gate */}
+          <Card className="border-2 border-primary-200">
+            <CardBody className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Icon
+                  className="text-2xl text-primary-600"
+                  icon="mdi:barcode-scan"
+                />
+                <p className="font-medium text-sm text-default-700">
+                  Máy quét đầu đọc (barcode/QR)
+                </p>
+              </div>
+              <form onSubmit={handleScannerSubmit}>
+                <Input
+                  ref={scannerInputRef}
+                  placeholder="Bấm vào đây rồi quét mã..."
+                  size="lg"
+                  startContent={
+                    <Icon
+                      className="text-default-400"
+                      icon="mdi:cursor-default-click-outline"
+                    />
+                  }
+                  value={scanInput}
+                  variant="bordered"
+                  onValueChange={setScanInput}
+                />
+              </form>
+              <p className="text-xs text-default-400">
+                Đưa con trỏ vào ô trên và quét — máy quét sẽ tự nhập dữ liệu và
+                gửi Enter để xử lý.
+              </p>
+            </CardBody>
+          </Card>
+
           <Button
+            className="w-full h-16 text-lg"
             color="primary"
             size="lg"
-            className="w-full h-16 text-lg"
+            startContent={
+              <Icon className="text-2xl" icon="mdi:camera-outline" />
+            }
+            variant="flat"
             onPress={startScanner}
-            startContent={<Icon icon="mdi:camera-outline" className="text-2xl" />}
           >
-            Bắt đầu quét QR bằng camera
+            Hoặc quét QR bằng camera
           </Button>
 
           {cameraError && (
@@ -257,14 +440,23 @@ export default function ScanPage() {
 
           <Card>
             <CardBody className="space-y-3">
-              <p className="font-medium text-sm text-default-600">Hoặc nhập thủ công (JSON từ QR):</p>
+              <p className="font-medium text-sm text-default-600">
+                Hoặc nhập thủ công (JSON từ QR):
+              </p>
               <Textarea
-                placeholder={'{"qrCode":"...","fullName":"Nguyễn Văn A"} hoặc {"citizenId":"...","name":"..."}'}
+                minRows={3}
+                placeholder={
+                  '{"qrCode":"...","fullName":"Nguyễn Văn A"} hoặc {"citizenId":"...","name":"..."}'
+                }
                 value={manualInput}
                 onValueChange={setManualInput}
-                minRows={3}
               />
-              <Button color="primary" isDisabled={!manualInput.trim()} onPress={() => processQRData(manualInput.trim())} className="w-full">
+              <Button
+                className="w-full"
+                color="primary"
+                isDisabled={!manualInput.trim()}
+                onPress={() => processQRData(manualInput.trim())}
+              >
                 Xử lý
               </Button>
             </CardBody>
