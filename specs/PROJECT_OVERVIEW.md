@@ -86,8 +86,12 @@ Quản lý nhân sự quân đội, kiểm soát ra vào cổng bằng QR, và x
 
 ### 4️⃣c Quét QR Cổng (Scan)
 
-- Trang `/scan`: dùng camera (`html5-qrcode`) quét QR quân nhân / người dân → gọi `POST /api/qr-scan-logs/scan`
-- Với người dân: admin Duyệt/Từ chối ngay trên trang
+- Trang `/scan` có **2 cách quét**:
+  - **Máy quét đầu đọc (barcode/QR)** — ô nhập tự focus, máy quét "gõ" dữ liệu + Enter → xử lý (phù hợp trực ban tại cổng).
+  - **Camera** (`html5-qrcode`) — giải mã QR trực tiếp trong trình duyệt (nên dùng cho thẻ CCCD để tên tiếng Việt đúng).
+- Nhận cả **JSON** (quân nhân/công dân) và **CCCD dạng `số|...`** (tự tách 7 trường), tự **khôi phục chữ số** bị lệch Option+số → gọi `POST /api/qr-scan-logs/scan`.
+- Với người dân: admin Duyệt/Từ chối ngay trên trang.
+- ⚠️ Hạn chế: máy quét USB (HID keyboard) có thể làm **hỏng dấu tiếng Việt** ở tên/địa chỉ CCCD — số thì luôn đúng; muốn tên đúng dùng camera hoặc máy quét đặt US-keyboard + UTF-8.
 
 ### 4️⃣d Cấu Hình Hệ Thống
 

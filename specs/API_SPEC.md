@@ -47,13 +47,16 @@ Paginated endpoints return:
 }
 ```
 
-### Authentication
+### Request Headers
 
-All endpoints (except signin/signup) require:
+Every request sends `Accept-Language: vi` (set in `lib/api-client.ts`, and in `hooks/use-auth.ts` for signin/signout which use raw `fetch`) so the backend returns Vietnamese error messages.
+
+All endpoints (except signin/signup) also require:
 
 ```
 Authorization: Bearer {token}
-Content-Type: application/json
+Content-Type: application/json   (omitted for multipart/form-data uploads)
+Accept-Language: vi
 ```
 
 ---
@@ -641,6 +644,8 @@ Content-Type: application/json
   "usedOutCount": 0
 }
 ```
+
+> ⚠️ **Missing field (BE action)**: the response has `militaryPersonnelId` but **no personnel name**. The `/requests` page shows the id in the "NHÂN SỰ" column as a result. Add e.g. `militaryPersonnelFullName` to `LeaveRequestResponse`; the FE (`personnelLabel`) already reads it if present.
 
 ---
 

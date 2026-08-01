@@ -219,9 +219,9 @@ interface Soldier {
 
 **Features**:
 
-- Create/Update/Delete units (each linked to a `regionCode`)
-- Upload logos for units to S3 (`uploadLogo`)
+- Create/Update/Delete units
 - Search + pagination
+- The `/units` form UI captures **only `unitCode` + `unitName`** (simplified). The backend `CreateUnitParams` still supports `address`, `establishedDate`, `description`, `logoPath`, but these are no longer edited/shown in the UI (table columns Địa chỉ/Logo were also removed). `uploadLogo` remains in `use-unit` but is unused by the page.
 
 **API Endpoints**:
 
@@ -346,6 +346,8 @@ interface SubmissionFlow {
 
 - `hooks/use-leave-request.ts`
 - `app/(private)/requests/page.tsx`
+
+> ⚠️ **BE ACTION**: `LeaveRequestResponse` currently returns only `militaryPersonnelId` (no name). The `/requests` "NHÂN SỰ" column therefore shows the id. Backend should add the personnel **name** to the response (e.g. `militaryPersonnelFullName`). The FE `personnelLabel(req)` already renders that field the moment it appears — no per-row detail fetch is made (decision: don't call `/api/personnel/{id}` N times just for names).
 
 **Features**:
 
@@ -477,11 +479,18 @@ interface LeaveApprovalConfig {
 
 **Features**:
 
-- Scan QR codes (military personnel or civilian) from the device camera
+- Two capture modes on `/scan`:
+  - **Hardware barcode/QR scanner (keyboard wedge)** — an auto-focused input; the scanner "types" the value + Enter → submits. Primary at the gate.
+  - **Device camera** (`html5-qrcode`) — decodes the QR image directly in the browser (bypasses keyboard-layout issues; best for Vietnamese CCCD names).
+- Input parsing (`processQRData`):
+  - JSON payload → military (`qrCode`/`unitCode`/`rankCode`/`code`) or citizen (`citizenId`).
+  - **CCCD (`|`-delimited)** → parsed into `citizen` (`citizenId`, `name`, `birthday`, `address`, `issueDate`); dates `DDMMYYYY`→`YYYY-MM-DD`.
+  - **Option+digit recovery**: a mis-configured HID scanner on macOS emits digits as Option-symbols (`º¡™£¢∞§¶•ª`); these are mapped back to `0–9` (deterministic, safe).
 - For military personnel: auto-validate against leave requests
 - For civilians: manual approval workflow (approve/reject on `/scan`)
 - Automatic `usedOutCount` increment on successful scan
-- Log all scans with timestamps and status
+
+> **Known hardware limitation**: a USB barcode scanner is an HID keyboard, so Vietnamese diacritics in CCCD name/address can be corrupted by the scanner/OS keyboard layout before the browser receives them — not fixable in-app. Numbers (CCCD id, dates) are recovered reliably; for correct Vietnamese text use the **camera** mode or a scanner set to US-keyboard + UTF-8 output.
 
 > **Note**: `/history` currently renders pending leave requests (`getPendingLeaveRequests`), not scan logs. There is **no** `GET /api/qr-scan-logs` list endpoint in the live Swagger; `getQRScanLogs` in `use-qr-scan.ts` targets a non-existent path (dead code, would 404) until the BE adds it.
 
