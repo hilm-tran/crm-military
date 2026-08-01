@@ -409,6 +409,16 @@ function DetailModal({ isOpen, onOpenChange, request }: DetailModalProps) {
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
+// Show the personnel name if the API provides one (any of these fields);
+// otherwise fall back to the id. No extra detail call — waiting on BE to add
+// a name field to LeaveRequestResponse.
+const personnelLabel = (req: any) =>
+  req.militaryPersonnelFullName ??
+  req.militaryPersonnelName ??
+  req.militaryPersonnel?.fullName ??
+  req.fullName ??
+  req.militaryPersonnelId;
+
 export default function RequestPage() {
   const {
     getMyLeaveRequests,
@@ -589,7 +599,7 @@ export default function RequestPage() {
                     <TableRow key={req.id}>
                       <TableCell>{i + 1}</TableCell>
                       <TableCell>
-                        {(req as any).militaryPersonnel?.fullName ?? req.militaryPersonnelId}
+                        {personnelLabel(req)}
                       </TableCell>
                       <TableCell>
                         {formatDate(req.leaveFrom)} → {formatDate(req.leaveTo)}
@@ -624,7 +634,7 @@ export default function RequestPage() {
             <Card key={req.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium min-w-0 truncate">
-                  {(req as any).militaryPersonnel?.fullName ?? req.militaryPersonnelId}
+                  {personnelLabel(req)}
                 </p>
                 <StatusChip status={req.status} />
               </div>
