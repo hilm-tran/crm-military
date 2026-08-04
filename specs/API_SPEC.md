@@ -645,7 +645,7 @@ Accept-Language: vi
 }
 ```
 
-> ⚠️ **Missing field (BE action)**: the response has `militaryPersonnelId` but **no personnel name**. The `/requests` page shows the id in the "NHÂN SỰ" column as a result. Add e.g. `militaryPersonnelFullName` to `LeaveRequestResponse`; the FE (`personnelLabel`) already reads it if present.
+> ✅ **Resolved 2026-08-04**: `LeaveRequestResponse` now includes a nested `militaryPersonnel` (full `MilitaryPersonnelResponse` with `fullName`, `vehicle`, …). The `/requests` "NHÂN SỰ" column shows the name via `personnelLabel(req)` — no extra fetch. Typed as `LeaveRequest.militaryPersonnel?: Soldier` in `hooks/use-leave-request.ts`.
 
 ---
 
@@ -778,7 +778,17 @@ Accept-Language: vi
 
 ## QR Scan APIs
 
-> **Note**: There is **no** `GET /api/qr-scan-logs` list endpoint in the live Swagger (`/v3/api-docs`) — only `scan`, `{id}`, `{id}/approve`, `{id}/reject`. The `useQRScan().getQRScanLogs` helper in `hooks/use-qr-scan.ts` calls `GET /api/qr-scan-logs` but that path does not exist server-side (would 404) — treat it as dead code until the BE adds it. The `/history` page renders `GET /api/leave-requests/pending` instead. Scan/approve/reject are used by the `/scan` gate-control page (camera scanning via `html5-qrcode`).
+> **Updated 2026-08-04**: BE added the list endpoint `GET /api/qr-scan-logs`. The `/scan` page uses scan/approve/reject; the list endpoint is wrapped by `useQRScan().getQRScanLogs` and can back a real scan-log history view (the `/history` page currently still renders `GET /api/leave-requests/pending`).
+
+### GET /api/qr-scan-logs
+
+**Purpose**: List scan logs (paginated)
+
+**Query Parameters**: `scanType` (`MILITARY_PERSONNEL`|`CITIZEN`), `status` (`DANG_XU_LY`|`DONG_Y`|`TU_CHOI`), `page`, `size`
+
+**Response**: paginated `QrScanLogResponse` (see scan response below).
+
+---
 
 ### POST /api/qr-scan-logs/scan
 
@@ -826,6 +836,8 @@ Or for civilian:
   "militaryPersonnelId": 456,
   "militaryPersonnelCode": "DV001-DAI-UY-...",
   "militaryPersonnelFullName": "Hoàng Ngọc Chiến",
+  "militaryPersonnelImageUrl": "/api/common/images/personnel/xxx.jpg",
+  "militaryPersonnelVehicle": { "...": "VehicleResponse | null" },
   "citizenName": "string",
   "citizenBirthday": "date",
   "citizenAddress": "string",

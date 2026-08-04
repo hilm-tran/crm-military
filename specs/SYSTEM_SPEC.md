@@ -347,7 +347,7 @@ interface SubmissionFlow {
 - `hooks/use-leave-request.ts`
 - `app/(private)/requests/page.tsx`
 
-> ⚠️ **BE ACTION**: `LeaveRequestResponse` currently returns only `militaryPersonnelId` (no name). The `/requests` "NHÂN SỰ" column therefore shows the id. Backend should add the personnel **name** to the response (e.g. `militaryPersonnelFullName`). The FE `personnelLabel(req)` already renders that field the moment it appears — no per-row detail fetch is made (decision: don't call `/api/personnel/{id}` N times just for names).
+> ✅ **Resolved 2026-08-04**: `LeaveRequestResponse` now returns a nested `militaryPersonnel` (full `MilitaryPersonnelResponse`). The `/requests` "NHÂN SỰ" column shows the name via `personnelLabel(req)` reading `militaryPersonnel.fullName` — no per-row detail fetch. Typed as `LeaveRequest.militaryPersonnel?: Soldier`.
 
 **Features**:
 
@@ -492,7 +492,7 @@ interface LeaveApprovalConfig {
 
 > **Known hardware limitation**: a USB barcode scanner is an HID keyboard, so Vietnamese diacritics in CCCD name/address can be corrupted by the scanner/OS keyboard layout before the browser receives them — not fixable in-app. Numbers (CCCD id, dates) are recovered reliably; for correct Vietnamese text use the **camera** mode or a scanner set to US-keyboard + UTF-8 output.
 
-> **Note**: `/history` currently renders pending leave requests (`getPendingLeaveRequests`), not scan logs. There is **no** `GET /api/qr-scan-logs` list endpoint in the live Swagger; `getQRScanLogs` in `use-qr-scan.ts` targets a non-existent path (dead code, would 404) until the BE adds it.
+> **Updated 2026-08-04**: BE added `GET /api/qr-scan-logs` (params `scanType`, `status`, `page`, `size`; paginated). `getQRScanLogs` in `use-qr-scan.ts` now targets the real endpoint and returns `PaginatedResponse<QRScanLog>`. The scan response also gained `militaryPersonnelImageUrl` (portrait — enables gate photo verification, P4) and `militaryPersonnelVehicle` (`VehicleResponse`). `/history` still renders pending leave requests; it can now be repointed to the scan-log list (P3).
 
 **Scan Validation Logic (Military Personnel)**:
 
@@ -517,8 +517,7 @@ When QR scanned:
 - `POST /api/qr-scan-logs/{id}/approve` - Approve civilian
 - `POST /api/qr-scan-logs/{id}/reject` - Reject civilian
 - `GET /api/qr-scan-logs/{id}` - Get scan details
-
-> No list endpoint (`GET /api/qr-scan-logs`) exists in the live API.
+- `GET /api/qr-scan-logs?scanType&status&page&size` - List scan logs (paginated)
 
 **Data Model**:
 
@@ -577,13 +576,11 @@ Derived from the initiative document *"Thuyết minh sáng kiến — Phần m�
 
 ### P3. Scan-Log History & Search (Lịch sử & tra cứu)
 
-- A real entry/exit **log list** with filters by name / unit / time / CCCD.
-- Requires a `GET /api/qr-scan-logs` list endpoint (does not exist today; `getQRScanLogs` currently targets a non-existent path). Once available, repoint `/history` to it instead of pending leave requests.
+- A real entry/exit **log list** view. ✅ **Backend endpoint now exists** (`GET /api/qr-scan-logs?scanType&status&page&size`, wrapped by `getQRScanLogs`). **FE work remaining**: build the list UI and repoint `/history` from pending leave requests to this endpoint. (Filters currently limited to `scanType`/`status` — name/time/CCCD search still needs BE.)
 
 ### P4. Portrait Verification at Gate (Đối chiếu ảnh chân dung)
 
-- On scan, display the person's portrait photo for the duty officer to visually confirm identity.
-- Requires the scan response (`QRScanLog`) to include the personnel `imageUrl` (not present today).
+- On scan, display the person's portrait for the duty officer to visually confirm identity. ✅ **Done (2026-08-04)**: the `/scan` result card renders `militaryPersonnelImageUrl` (portrait, via `resolveImageUrl`) and `militaryPersonnelVehicle` (type/brand/model/plate).
 
 ### P5. Audit Log (Nhật ký thao tác)
 

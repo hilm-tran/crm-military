@@ -334,12 +334,12 @@ Sidebar được nhóm theo 5 mục:
 | Quản lý hồ sơ quân nhân (cấp bậc, chức vụ, đơn vị) | ✅ Đã có | `/soldiers`, `/add-soldier` |
 | Quản lý phương tiện ra vào | ✅ Đã có | `/vehicles`, 1:1 với quân nhân |
 | Quản lý đơn vị | ✅ Đã có | `/units` |
-| Lưu lịch sử ra vào | 🟠 Một phần | `/history` đang hiển thị đơn chờ duyệt, **chưa** phải log scan; chưa có API list `qr-scan-logs` |
+| Lưu lịch sử ra vào | 🟠 Một phần | API list `GET /api/qr-scan-logs` **đã có** (BE 2026-08-04); còn việc FE dựng view + trỏ `/history` sang endpoint này (hiện vẫn hiển thị đơn chờ duyệt) |
 | Tìm kiếm theo tên/đơn vị/thời gian/CCCD | 🟠 Một phần | Có tìm theo tên/đơn vị; **chưa** lọc theo thời gian/CCCD |
 | **Quản lý danh sách khách + thời gian ra vào** | ❌ Chưa có | Chưa có module/API quản lý khách (chỉ quét inline) |
 | **Thống kê số lượt ra vào (ngày/tuần/tháng/đơn vị/đối tượng)** | ❌ Chưa có | Dashboard đang **mock**; không có API thống kê |
 | **Xuất báo cáo phục vụ chỉ huy** | ❌ Chưa có | Chưa có API/UI export |
-| **Hiển thị ảnh chân dung để đối chiếu khi quét** | ❌ Chưa có | `QRScanLog` không trả `imageUrl` |
+| **Hiển thị ảnh chân dung để đối chiếu khi quét** | ✅ Đã có | Kết quả `/scan` hiện ảnh chân dung + phương tiện (BE trả `militaryPersonnelImageUrl`/`militaryPersonnelVehicle`) |
 | **Nhật ký thao tác (audit log)** | ❌ Chưa có | Chưa có API/UI |
 | Đối tượng: CNV quốc phòng, lao động hợp đồng | ❌ Chưa có | Mới hỗ trợ quân nhân + công dân |
 | Phân quyền người dùng theo cấp | ✅ Đã có | 5 role, scope theo region/unit |
