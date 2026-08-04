@@ -492,7 +492,7 @@ interface LeaveApprovalConfig {
 
 > **Known hardware limitation**: a USB barcode scanner is an HID keyboard, so Vietnamese diacritics in CCCD name/address can be corrupted by the scanner/OS keyboard layout before the browser receives them — not fixable in-app. Numbers (CCCD id, dates) are recovered reliably; for correct Vietnamese text use the **camera** mode or a scanner set to US-keyboard + UTF-8 output.
 
-> **Updated 2026-08-04**: BE added `GET /api/qr-scan-logs` (params `scanType`, `status`, `page`, `size`; paginated). `getQRScanLogs` in `use-qr-scan.ts` now targets the real endpoint and returns `PaginatedResponse<QRScanLog>`. The scan response also gained `militaryPersonnelImageUrl` (portrait — enables gate photo verification, P4) and `militaryPersonnelVehicle` (`VehicleResponse`). `/history` still renders pending leave requests; it can now be repointed to the scan-log list (P3).
+> **Updated 2026-08-04**: BE added `GET /api/qr-scan-logs` (params `scanType`, `status`, `page`, `size`; paginated). `getQRScanLogs` in `use-qr-scan.ts` now targets the real endpoint and returns `PaginatedResponse<QRScanLog>`. The scan response also gained `militaryPersonnelImageUrl` (portrait — enables gate photo verification, P4) and `militaryPersonnelVehicle` (`VehicleResponse`). `/history` now renders this scan-log list (server-side `scanType`/`status` filters + pagination, portrait thumbnails).
 
 **Scan Validation Logic (Military Personnel)**:
 
@@ -576,7 +576,7 @@ Derived from the initiative document *"Thuyết minh sáng kiến — Phần m�
 
 ### P3. Scan-Log History & Search (Lịch sử & tra cứu)
 
-- A real entry/exit **log list** view. ✅ **Backend endpoint now exists** (`GET /api/qr-scan-logs?scanType&status&page&size`, wrapped by `getQRScanLogs`). **FE work remaining**: build the list UI and repoint `/history` from pending leave requests to this endpoint. (Filters currently limited to `scanType`/`status` — name/time/CCCD search still needs BE.)
+- A real entry/exit **log list** view. ✅ **Done (2026-08-04)**: `/history` now renders `GET /api/qr-scan-logs` (server-side pagination + `scanType`/`status` filters, portrait thumbnails). Free-text search by name/time/CCCD is not yet available — needs BE query params.
 
 ### P4. Portrait Verification at Gate (Đối chiếu ảnh chân dung)
 

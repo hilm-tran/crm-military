@@ -334,7 +334,7 @@ Sidebar được nhóm theo 5 mục:
 | Quản lý hồ sơ quân nhân (cấp bậc, chức vụ, đơn vị) | ✅ Đã có | `/soldiers`, `/add-soldier` |
 | Quản lý phương tiện ra vào | ✅ Đã có | `/vehicles`, 1:1 với quân nhân |
 | Quản lý đơn vị | ✅ Đã có | `/units` |
-| Lưu lịch sử ra vào | 🟠 Một phần | API list `GET /api/qr-scan-logs` **đã có** (BE 2026-08-04); còn việc FE dựng view + trỏ `/history` sang endpoint này (hiện vẫn hiển thị đơn chờ duyệt) |
+| Lưu lịch sử ra vào | ✅ Đã có | `/history` hiển thị log quét thật (`GET /api/qr-scan-logs`), lọc theo đối tượng/trạng thái + phân trang, kèm ảnh chân dung |
 | Tìm kiếm theo tên/đơn vị/thời gian/CCCD | 🟠 Một phần | Có tìm theo tên/đơn vị; **chưa** lọc theo thời gian/CCCD |
 | **Quản lý danh sách khách + thời gian ra vào** | ❌ Chưa có | Chưa có module/API quản lý khách (chỉ quét inline) |
 | **Thống kê số lượt ra vào (ngày/tuần/tháng/đơn vị/đối tượng)** | ❌ Chưa có | Dashboard đang **mock**; không có API thống kê |
