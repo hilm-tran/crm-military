@@ -1,6 +1,9 @@
-import { apiClient } from "@/lib/api-client";
 import { addToast } from "@heroui/toast";
 import { useCallback, useMemo } from "react";
+
+import { apiClient } from "@/lib/api-client";
+import { VehicleResponse } from "@/hooks/use-vehicle";
+import { PaginatedResponse } from "@/types/api";
 
 export interface MilitaryPersonnelQR {
   id?: number;
@@ -28,6 +31,8 @@ export interface QRScanLog {
   militaryPersonnelId?: number;
   militaryPersonnelCode?: string;
   militaryPersonnelFullName?: string;
+  militaryPersonnelImageUrl?: string;
+  militaryPersonnelVehicle?: VehicleResponse | null;
   citizenName?: string;
   citizenBirthday?: string;
   citizenAddress?: string;
@@ -132,14 +137,25 @@ export const useQRScan = () => {
   }, []);
 
   const getQRScanLogs = useCallback(
-    async (params?: { page?: number; size?: number }) => {
+    async (params?: {
+      scanType?: "MILITARY_PERSONNEL" | "CITIZEN";
+      status?: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
+      page?: number;
+      size?: number;
+    }) => {
       try {
-        const { page = 0, size = 20 } = params ?? {};
+        const { scanType, status, page = 0, size = 20 } = params ?? {};
         const query = new URLSearchParams({
           page: page.toString(),
           size: size.toString(),
-        }).toString();
-        return await apiClient.get<QRScanLog[]>(`/api/qr-scan-logs?${query}`);
+        });
+
+        if (scanType) query.set("scanType", scanType);
+        if (status) query.set("status", status);
+
+        return await apiClient.get<PaginatedResponse<QRScanLog>>(
+          `/api/qr-scan-logs?${query.toString()}`,
+        );
       } catch (error: any) {
         console.error("Get QR Scan Logs Error:", error);
         addToast({

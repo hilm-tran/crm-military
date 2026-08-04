@@ -1,6 +1,8 @@
-import { apiClient } from "@/lib/api-client";
 import { addToast } from "@heroui/toast";
 import { useCallback, useMemo } from "react";
+
+import { apiClient } from "@/lib/api-client";
+import { Soldier } from "@/hooks/use-soldier";
 
 export interface LeaveRequestHistory {
   id: string;
@@ -29,6 +31,8 @@ export interface LeaveRequest {
   reason?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Added by BE: nested MilitaryPersonnelResponse (has fullName, vehicle, ...)
+  militaryPersonnel?: Soldier | null;
 }
 
 export interface CreateLeaveRequestParams {
