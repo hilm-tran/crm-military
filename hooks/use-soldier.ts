@@ -33,6 +33,15 @@ export interface CreateSoldierParams {
   };
 }
 
+// PUT /api/personnel/{id} — MilitaryPersonnelRequest (personnel fields only)
+export interface UpdateSoldierParams {
+  fullName: string;
+  rankCode: string;
+  unitCode: string;
+  positionCode: string;
+  imagePath?: string;
+}
+
 export const useSoldier = () => {
   const createSoldier = useCallback(async (data: CreateSoldierParams) => {
     try {
@@ -114,6 +123,34 @@ export const useSoldier = () => {
     [],
   );
 
+  const updateSoldier = useCallback(
+    async (id: number | string, data: UpdateSoldierParams) => {
+      try {
+        const result = await apiClient.fetch(`/api/personnel/${id}`, {
+          method: "PUT",
+          body: JSON.stringify(data),
+        });
+
+        addToast({
+          title: "Thành công",
+          description: "Đã cập nhật quân nhân",
+          color: "success",
+        });
+
+        return result;
+      } catch (error: any) {
+        console.error("Update Soldier Error:", error);
+        addToast({
+          title: "Lỗi",
+          description: error.message || "Không thể cập nhật quân nhân",
+          color: "danger",
+        });
+        throw error;
+      }
+    },
+    [],
+  );
+
   const deleteSoldier = useCallback(async (id: number) => {
     try {
       const result = await apiClient.fetch(`/api/personnel/${id}`, {
@@ -141,10 +178,11 @@ export const useSoldier = () => {
   return useMemo(
     () => ({
       createSoldier,
+      updateSoldier,
       uploadImage,
       getSoldiers,
       deleteSoldier,
     }),
-    [createSoldier, uploadImage, getSoldiers, deleteSoldier],
+    [createSoldier, updateSoldier, uploadImage, getSoldiers, deleteSoldier],
   );
 };

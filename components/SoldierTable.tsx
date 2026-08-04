@@ -24,11 +24,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { AddSoldierModal } from "./AddSoldierModal";
+import { EditSoldierModal } from "./EditSoldierModal";
 import { SoldierVehicleModal } from "./SoldierVehicleModal";
 
-import { Soldier, useSoldier } from "@/hooks/use-soldier";
 import { useCombobox } from "@/hooks/use-combobox";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Soldier, useSoldier } from "@/hooks/use-soldier";
 
 const QRCodeCell = ({
   base64,
@@ -43,9 +44,9 @@ const QRCodeCell = ({
 
   return (
     <button
-      type="button"
       className="w-16 h-16 border rounded bg-white p-0 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
       title={`Phóng to QR - ${name}`}
+      type="button"
       onClick={onClick}
     >
       <img
@@ -80,6 +81,12 @@ export const SoldierTable = () => {
   } = useDisclosure();
   const [selectedVehicleSoldier, setSelectedVehicleSoldier] =
     useState<Soldier | null>(null);
+  const {
+    isOpen: isEditOpen,
+    onOpen: onEditOpen,
+    onOpenChange: onEditOpenChange,
+  } = useDisclosure();
+  const [editSoldier, setEditSoldier] = useState<Soldier | null>(null);
   const [rankMap, setRankMap] = useState<Record<string, string>>({});
   const [positionMap, setPositionMap] = useState<Record<string, string>>({});
 
@@ -265,6 +272,19 @@ export const SoldierTable = () => {
                   <div className="flex justify-center gap-2">
                     <Button
                       isIconOnly
+                      aria-label="Sửa"
+                      size="sm"
+                      title="Sửa"
+                      variant="flat"
+                      onPress={() => {
+                        setEditSoldier(item);
+                        onEditOpen();
+                      }}
+                    >
+                      <Icon icon="mdi:pencil-outline" />
+                    </Button>
+                    <Button
+                      isIconOnly
                       aria-label="Phương tiện"
                       color={item.vehicle ? "primary" : "default"}
                       size="sm"
@@ -356,6 +376,18 @@ export const SoldierTable = () => {
               <div className="mt-3 flex gap-2">
                 <Button
                   className="flex-1"
+                  size="sm"
+                  startContent={<Icon icon="mdi:pencil-outline" />}
+                  variant="flat"
+                  onPress={() => {
+                    setEditSoldier(item);
+                    onEditOpen();
+                  }}
+                >
+                  Sửa
+                </Button>
+                <Button
+                  className="flex-1"
                   color={item.vehicle ? "primary" : "default"}
                   size="sm"
                   startContent={<Icon icon="mdi:car-outline" />}
@@ -407,6 +439,13 @@ export const SoldierTable = () => {
         isOpen={isVehicleModalOpen}
         soldier={selectedVehicleSoldier}
         onOpenChange={onVehicleModalOpenChange}
+        onSuccess={fetchSoldiers}
+      />
+
+      <EditSoldierModal
+        isOpen={isEditOpen}
+        soldier={editSoldier}
+        onOpenChange={onEditOpenChange}
         onSuccess={fetchSoldiers}
       />
 
