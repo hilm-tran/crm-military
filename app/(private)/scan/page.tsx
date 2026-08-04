@@ -14,6 +14,8 @@ import { Html5Qrcode } from "html5-qrcode";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { useQRScan } from "@/hooks/use-qr-scan";
+import { VehicleResponse } from "@/hooks/use-vehicle";
+import { resolveImageUrl } from "@/lib/image-url";
 import { PageHeader } from "@/components/PageHeader";
 
 type ScanState = "idle" | "scanning" | "processing" | "result";
@@ -24,7 +26,15 @@ interface ScanResult {
   type: string;
   name?: string;
   logId?: string;
+  imageUrl?: string | null;
+  vehicle?: VehicleResponse | null;
 }
+
+const VEHICLE_TYPE_LABEL: Record<string, string> = {
+  CAR: "Ô tô",
+  MOTORBIKE: "Xe máy",
+  OTHER: "Khác",
+};
 
 const STATUS_CONFIG = {
   DONG_Y: {
@@ -174,6 +184,8 @@ export default function ScanPage() {
             parsed.fullName ??
             parsed.name,
           logId: res.id,
+          imageUrl: resolveImageUrl(res.militaryPersonnelImageUrl),
+          vehicle: res.militaryPersonnelVehicle ?? null,
         });
         setState("result");
       } catch (err: any) {
@@ -294,6 +306,16 @@ export default function ScanPage() {
           className={`border-2 ${STATUS_CONFIG[result.status]?.bg ?? "bg-default-50"}`}
         >
           <CardBody className="space-y-4 p-6">
+            {result.imageUrl && (
+              <div className="flex justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  alt={result.name ?? "Ảnh chân dung"}
+                  className="w-32 h-32 object-cover rounded-lg border-2 border-divider"
+                  src={result.imageUrl}
+                />
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <Icon
                 className={`text-4xl ${STATUS_CONFIG[result.status]?.iconClass ?? "text-default-400"}`}
@@ -327,6 +349,23 @@ export default function ScanPage() {
               <p className="text-sm text-default-600 bg-content1 rounded p-2 border border-divider">
                 Lý do: {result.reason}
               </p>
+            )}
+
+            {result.vehicle && (
+              <div className="text-sm bg-content1 rounded p-3 border border-divider space-y-1">
+                <p className="font-medium flex items-center gap-1.5">
+                  <Icon className="text-base" icon="mdi:car" />
+                  Phương tiện
+                </p>
+                <p className="text-default-600">
+                  {VEHICLE_TYPE_LABEL[result.vehicle.vehicleType] ??
+                    result.vehicle.vehicleType}{" "}
+                  · {result.vehicle.brand} {result.vehicle.model}
+                </p>
+                <p className="font-mono text-default-600">
+                  Biển số: {result.vehicle.licensePlate}
+                </p>
+              </div>
             )}
 
             {result.type === "CITIZEN" && result.status === "DANG_XU_LY" && (
