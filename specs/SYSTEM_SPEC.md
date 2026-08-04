@@ -166,6 +166,7 @@ military-fe/
 - `hooks/use-soldier.ts`
 - `components/SoldierTable.tsx`
 - `components/AddSoldierModal.tsx`
+- `components/EditSoldierModal.tsx`
 - `components/ImageUpload.tsx`
 - `app/(private)/soldiers/page.tsx`
 - `app/(private)/add-soldier/page.tsx`
@@ -183,6 +184,7 @@ military-fe/
 
 - `POST /api/auth/signup` - Create personnel + user account (optional nested `vehicle`)
 - `GET /api/personnel?page=0&size=10&keyword=...` - List with pagination
+- `PUT /api/personnel/{id}` - Update personnel (fullName/rankCode/unitCode/positionCode + optional imagePath) via `EditSoldierModal` → `useSoldier().updateSoldier`. Uses `MilitaryPersonnelRequest`; account/vehicle are edited separately.
 - `DELETE /api/personnel/{id}` - Delete personnel
 - `POST /api/common/upload-image?category=personnel` - Upload personnel image (unified upload endpoint)
 - `GET /api/common/images/personnel/{filename}` - Retrieve image

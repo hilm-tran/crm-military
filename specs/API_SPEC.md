@@ -202,7 +202,21 @@ Accept-Language: vi
 
 ### PUT /api/personnel/{id}
 
-**Purpose**: Update personnel
+**Purpose**: Update personnel (`MilitaryPersonnelRequest`)
+
+**Request**:
+
+```json
+{
+  "fullName": "string (required)",
+  "rankCode": "DAI_UY (required)",
+  "unitCode": "DV001 (required)",
+  "positionCode": "TRUNG_DOI_TRUONG (required)",
+  "imagePath": "string (optional)"
+}
+```
+
+> FE: `EditSoldierModal` (Sửa action on the soldiers table) → `useSoldier().updateSoldier`. Preserves the existing image by resending its filename unless a new one is uploaded.
 
 ---
 
