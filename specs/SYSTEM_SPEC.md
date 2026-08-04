@@ -179,6 +179,7 @@ military-fe/
 - Add new personnel with image upload
 - Role-based visibility filtering
 - Image caching with localStorage
+- **Role-gated actions (FE)**: the Thêm/Sửa/Xóa buttons in `SoldierTable` are shown only to management roles (`ROLE_SYSTEM_ADMIN` / `ROLE_ADMIN_REGION` / `ROLE_ADMIN_UNIT`), read from the session cookie. `ROLE_USER` sees a read-only list (+ QR / Phương tiện view). Backend still enforces the permission; this only hides the UI. (Note: the spec allows USER to edit their own image — that narrower case is not yet exposed in the FE.)
 
 **API Endpoints**:
 

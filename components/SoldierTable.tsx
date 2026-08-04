@@ -22,6 +22,7 @@ import {
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 import { AddSoldierModal } from "./AddSoldierModal";
 import { EditSoldierModal } from "./EditSoldierModal";
@@ -30,6 +31,14 @@ import { SoldierVehicleModal } from "./SoldierVehicleModal";
 import { useCombobox } from "@/hooks/use-combobox";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Soldier, useSoldier } from "@/hooks/use-soldier";
+import { CookieNames } from "@/types/global.enum";
+
+// Roles allowed to create/edit/delete personnel (BE enforces; FE hides the UI).
+const MANAGE_ROLES = [
+  "ROLE_SYSTEM_ADMIN",
+  "ROLE_ADMIN_REGION",
+  "ROLE_ADMIN_UNIT",
+];
 
 const QRCodeCell = ({
   base64,
@@ -89,6 +98,20 @@ export const SoldierTable = () => {
   const [editSoldier, setEditSoldier] = useState<Soldier | null>(null);
   const [rankMap, setRankMap] = useState<Record<string, string>>({});
   const [positionMap, setPositionMap] = useState<Record<string, string>>({});
+
+  // Read roles from the session cookie on the client (avoids SSR hydration mismatch).
+  const [canManage, setCanManage] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = Cookies.get(CookieNames.Session);
+      const roles: string[] = raw ? (JSON.parse(raw).roles ?? []) : [];
+
+      setCanManage(roles.some((r) => MANAGE_ROLES.includes(r)));
+    } catch {
+      setCanManage(false);
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([getRanks(), getPositions()]).then(([ranks, positions]) => {
@@ -195,14 +218,16 @@ export const SoldierTable = () => {
           onValueChange={setKeyword}
         />
 
-        <Button
-          className="w-full sm:w-auto"
-          color="primary"
-          startContent={<Icon icon="mdi:plus" />}
-          onPress={onOpen}
-        >
-          Thêm
-        </Button>
+        {canManage && (
+          <Button
+            className="w-full sm:w-auto"
+            color="primary"
+            startContent={<Icon icon="mdi:plus" />}
+            onPress={onOpen}
+          >
+            Thêm
+          </Button>
+        )}
       </div>
 
       <div className="hidden sm:flex flex-col gap-4">
@@ -270,19 +295,21 @@ export const SoldierTable = () => {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-center gap-2">
-                    <Button
-                      isIconOnly
-                      aria-label="Sửa"
-                      size="sm"
-                      title="Sửa"
-                      variant="flat"
-                      onPress={() => {
-                        setEditSoldier(item);
-                        onEditOpen();
-                      }}
-                    >
-                      <Icon icon="mdi:pencil-outline" />
-                    </Button>
+                    {canManage && (
+                      <Button
+                        isIconOnly
+                        aria-label="Sửa"
+                        size="sm"
+                        title="Sửa"
+                        variant="flat"
+                        onPress={() => {
+                          setEditSoldier(item);
+                          onEditOpen();
+                        }}
+                      >
+                        <Icon icon="mdi:pencil-outline" />
+                      </Button>
+                    )}
                     <Button
                       isIconOnly
                       aria-label="Phương tiện"
@@ -297,15 +324,17 @@ export const SoldierTable = () => {
                     >
                       <Icon icon="mdi:car-outline" />
                     </Button>
-                    <Button
-                      isIconOnly
-                      color="danger"
-                      size="sm"
-                      variant="flat"
-                      onPress={() => handleDeleteClick(item)}
-                    >
-                      <Icon icon="mdi:trash" />
-                    </Button>
+                    {canManage && (
+                      <Button
+                        isIconOnly
+                        color="danger"
+                        size="sm"
+                        variant="flat"
+                        onPress={() => handleDeleteClick(item)}
+                      >
+                        <Icon icon="mdi:trash" />
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -374,18 +403,20 @@ export const SoldierTable = () => {
                 </p>
               </div>
               <div className="mt-3 flex gap-2">
-                <Button
-                  className="flex-1"
-                  size="sm"
-                  startContent={<Icon icon="mdi:pencil-outline" />}
-                  variant="flat"
-                  onPress={() => {
-                    setEditSoldier(item);
-                    onEditOpen();
-                  }}
-                >
-                  Sửa
-                </Button>
+                {canManage && (
+                  <Button
+                    className="flex-1"
+                    size="sm"
+                    startContent={<Icon icon="mdi:pencil-outline" />}
+                    variant="flat"
+                    onPress={() => {
+                      setEditSoldier(item);
+                      onEditOpen();
+                    }}
+                  >
+                    Sửa
+                  </Button>
+                )}
                 <Button
                   className="flex-1"
                   color={item.vehicle ? "primary" : "default"}
@@ -399,15 +430,17 @@ export const SoldierTable = () => {
                 >
                   Phương tiện
                 </Button>
-                <Button
-                  isIconOnly
-                  color="danger"
-                  size="sm"
-                  variant="flat"
-                  onPress={() => handleDeleteClick(item)}
-                >
-                  <Icon icon="mdi:trash" />
-                </Button>
+                {canManage && (
+                  <Button
+                    isIconOnly
+                    color="danger"
+                    size="sm"
+                    variant="flat"
+                    onPress={() => handleDeleteClick(item)}
+                  >
+                    <Icon icon="mdi:trash" />
+                  </Button>
+                )}
               </div>
             </Card>
           ))
