@@ -177,7 +177,7 @@ export default function ScanPage() {
         setResult({
           status: res.status,
           reason: res.reason,
-          type: res.scanType ?? (isMilitary ? "MILITARY_PERSONNEL" : "CITIZEN"),
+          type: res.scanType ?? (isMilitary ? "MILITARY" : "CITIZEN"),
           name:
             res.militaryPersonnelFullName ??
             res.citizenName ??
@@ -336,7 +336,7 @@ export default function ScanPage() {
                   <p className="mt-1 font-semibold text-lg">{result.name}</p>
                 )}
                 <p className="text-sm text-default-500">
-                  {result.type === "MILITARY_PERSONNEL"
+                  {result.type === "MILITARY"
                     ? "Quân nhân"
                     : result.type === "CITIZEN"
                       ? "Người dân"

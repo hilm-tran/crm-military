@@ -24,7 +24,7 @@ export interface CitizenQR {
 
 export interface QRScanLog {
   id: string;
-  scanType: "MILITARY_PERSONNEL" | "CITIZEN";
+  scanType: "MILITARY" | "CITIZEN";
   scannedAt?: string;
   status: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
   reason?: string;

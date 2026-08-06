@@ -40,7 +40,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const SCAN_TYPE_LABEL: Record<string, string> = {
-  MILITARY_PERSONNEL: "Quân nhân",
+  MILITARY: "Quân nhân",
   CITIZEN: "Người dân",
 };
 
@@ -53,7 +53,7 @@ const STATUS_OPTIONS = [
 
 const SCAN_TYPE_OPTIONS = [
   { key: "", label: "Tất cả đối tượng" },
-  { key: "MILITARY_PERSONNEL", label: "Quân nhân" },
+  { key: "MILITARY", label: "Quân nhân" },
   { key: "CITIZEN", label: "Người dân" },
 ];
 

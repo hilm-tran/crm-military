@@ -527,7 +527,7 @@ When QR scanned:
 ```typescript
 interface QRScanLog {
   id: string;
-  type: "MILITARY_PERSONNEL" | "CITIZEN";
+  type: "MILITARY" | "CITIZEN";
   status: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
   payload: Record<string, any>; // QR data
   reason?: string;

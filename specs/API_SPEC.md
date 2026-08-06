@@ -798,7 +798,7 @@ Accept-Language: vi
 
 **Purpose**: List scan logs (paginated)
 
-**Query Parameters**: `scanType` (`MILITARY_PERSONNEL`|`CITIZEN`), `status` (`DANG_XU_LY`|`DONG_Y`|`TU_CHOI`), `page`, `size`
+**Query Parameters**: `scanType` (`MILITARY`|`CITIZEN`), `status` (`DANG_XU_LY`|`DONG_Y`|`TU_CHOI`), `page`, `size`
 
 **Response**: paginated `QrScanLogResponse` (see scan response below).
 
@@ -843,7 +843,7 @@ Or for civilian:
 ```json
 {
   "id": 123,
-  "scanType": "MILITARY_PERSONNEL | CITIZEN",
+  "scanType": "MILITARY | CITIZEN",
   "scannedAt": "2026-04-22T10:00:00",
   "status": "DONG_Y | TU_CHOI | DANG_XU_LY",
   "reason": "string",
