@@ -138,7 +138,7 @@ export const useQRScan = () => {
 
   const getQRScanLogs = useCallback(
     async (params?: {
-      scanType?: "MILITARY_PERSONNEL" | "CITIZEN";
+      scanType?: "MILITARY" | "CITIZEN";
       status?: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
       page?: number;
       size?: number;
