@@ -116,6 +116,15 @@ export default function ScanPage() {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scanInput, setScanInput] = useState("");
   const scannerInputRef = useRef<HTMLInputElement>(null);
+  // Phone → camera is the natural input; desktop → hardware barcode scanner.
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const touch = window.matchMedia?.("(pointer: coarse)").matches;
+    const ua = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    setIsMobile(Boolean(touch) || ua);
+  }, []);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -292,8 +301,9 @@ export default function ScanPage() {
   // Keep the scanner input focused whenever we're idle so a scan is captured
   // without the operator having to click first.
   useEffect(() => {
-    if (state === "idle") scannerInputRef.current?.focus();
-  }, [state]);
+    // Don't auto-focus on mobile — it would pop the on-screen keyboard.
+    if (state === "idle" && !isMobile) scannerInputRef.current?.focus();
+  }, [state, isMobile]);
 
   const handleApprove = async () => {
     if (!result?.logId) return;
@@ -450,41 +460,44 @@ export default function ScanPage() {
             </CardBody>
           </Card>
 
-          {/* Hardware barcode/QR scanner (keyboard wedge) — primary at the gate */}
-          <Card className="border-2 border-primary-200">
-            <CardBody className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Icon
-                  className="text-2xl text-primary-600"
-                  icon="mdi:barcode-scan"
-                />
-                <p className="font-medium text-sm text-default-700">
-                  Máy quét đầu đọc (barcode/QR)
+          {/* Desktop → hardware barcode scanner (keyboard wedge) is primary */}
+          {!isMobile && (
+            <Card className="border-2 border-primary-200">
+              <CardBody className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Icon
+                    className="text-2xl text-primary-600"
+                    icon="mdi:barcode-scan"
+                  />
+                  <p className="font-medium text-sm text-default-700">
+                    Máy quét đầu đọc (barcode/QR)
+                  </p>
+                </div>
+                <form onSubmit={handleScannerSubmit}>
+                  <Input
+                    ref={scannerInputRef}
+                    placeholder="Bấm vào đây rồi quét mã..."
+                    size="lg"
+                    startContent={
+                      <Icon
+                        className="text-default-400"
+                        icon="mdi:cursor-default-click-outline"
+                      />
+                    }
+                    value={scanInput}
+                    variant="bordered"
+                    onValueChange={setScanInput}
+                  />
+                </form>
+                <p className="text-xs text-default-400">
+                  Đưa con trỏ vào ô trên và quét — máy quét sẽ tự nhập dữ liệu
+                  và xử lý ngay, không cần nhấn Enter.
                 </p>
-              </div>
-              <form onSubmit={handleScannerSubmit}>
-                <Input
-                  ref={scannerInputRef}
-                  placeholder="Bấm vào đây rồi quét mã..."
-                  size="lg"
-                  startContent={
-                    <Icon
-                      className="text-default-400"
-                      icon="mdi:cursor-default-click-outline"
-                    />
-                  }
-                  value={scanInput}
-                  variant="bordered"
-                  onValueChange={setScanInput}
-                />
-              </form>
-              <p className="text-xs text-default-400">
-                Đưa con trỏ vào ô trên và quét — máy quét sẽ tự nhập dữ liệu và
-                xử lý ngay, không cần nhấn Enter.
-              </p>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          )}
 
+          {/* Mobile → camera is primary; desktop → camera is the fallback */}
           <Button
             className="w-full h-16 text-lg"
             color="primary"
@@ -492,10 +505,10 @@ export default function ScanPage() {
             startContent={
               <Icon className="text-2xl" icon="mdi:camera-outline" />
             }
-            variant="flat"
+            variant={isMobile ? "solid" : "flat"}
             onPress={startScanner}
           >
-            Hoặc quét QR bằng camera
+            {isMobile ? "Quét QR bằng camera" : "Hoặc quét QR bằng camera"}
           </Button>
 
           {cameraError && (

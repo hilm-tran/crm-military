@@ -483,9 +483,9 @@ interface LeaveApprovalConfig {
 **Features**:
 
 - **Scan guide banner** on the idle `/scan` screen: a 4-step illustration (mở mã QR/CCCD → đưa vào máy quét → đang xử lý → kết quả). Static asset at `public/qr-scan-guide.jpeg`, referenced as `/qr-scan-guide.jpeg`.
-- Two capture modes on `/scan`:
-  - **Hardware barcode/QR scanner (keyboard wedge)** — an auto-focused input; the scanner "types" the value + Enter → submits. Primary at the gate.
-  - **Device camera** (`html5-qrcode`) — decodes the QR image directly in the browser (bypasses keyboard-layout issues; best for Vietnamese CCCD names).
+- Two capture modes on `/scan`, **auto-selected by device** (touch/`pointer: coarse` or mobile UA → phone):
+  - **Desktop** → **hardware barcode/QR scanner (keyboard wedge)** is primary: an auto-focused input that **auto-submits after a ~120ms typing pause** (no Enter needed; Enter still works). Camera shown as fallback.
+  - **Mobile** → **device camera** (`html5-qrcode`) is primary (the scanner card + auto-focus are hidden to avoid popping the keyboard). Camera decodes the QR directly in the browser (bypasses keyboard-layout issues; best for Vietnamese CCCD names).
 - Input parsing (`processQRData`):
   - JSON payload → military (`qrCode`/`unitCode`/`rankCode`/`code`) or citizen (`citizenId`).
   - **CCCD (`|`-delimited)** → parsed into `citizen` (`citizenId`, `name`, `birthday`, `address`, `issueDate`); dates `DDMMYYYY`→`YYYY-MM-DD`.
