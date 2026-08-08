@@ -482,6 +482,7 @@ interface LeaveApprovalConfig {
 
 **Features**:
 
+- **Scan guide banner** on the idle `/scan` screen: a 4-step illustration (mở mã QR/CCCD → đưa vào máy quét → đang xử lý → kết quả). Static asset at `public/qr-scan-guide.jpeg`, referenced as `/qr-scan-guide.jpeg`.
 - Two capture modes on `/scan`:
   - **Hardware barcode/QR scanner (keyboard wedge)** — an auto-focused input; the scanner "types" the value + Enter → submits. Primary at the gate.
   - **Device camera** (`html5-qrcode`) — decodes the QR image directly in the browser (bypasses keyboard-layout issues; best for Vietnamese CCCD names).

@@ -13,10 +13,10 @@ import { Icon } from "@iconify/react";
 import { Html5Qrcode } from "html5-qrcode";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import { PageHeader } from "@/components/PageHeader";
 import { useQRScan } from "@/hooks/use-qr-scan";
 import { VehicleResponse } from "@/hooks/use-vehicle";
 import { resolveImageUrl } from "@/lib/image-url";
-import { PageHeader } from "@/components/PageHeader";
 
 type ScanState = "idle" | "scanning" | "processing" | "result";
 
@@ -261,7 +261,7 @@ export default function ScanPage() {
   }, [stopScanner]);
 
   // Hardware barcode/QR scanner acts as a keyboard: it "types" the decoded
-  // value then sends Enter → this submits the focused input.
+  // value. Enter (if the scanner sends one) submits immediately.
   const handleScannerSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
@@ -273,6 +273,21 @@ export default function ScanPage() {
     },
     [scanInput, processQRData],
   );
+
+  // Auto-submit without Enter: scanners type the whole payload in a burst, so
+  // once typing pauses (~120ms with no new input) we treat the scan as complete.
+  useEffect(() => {
+    if (state !== "idle") return;
+    const value = scanInput.trim();
+
+    if (!value) return;
+    const timer = setTimeout(() => {
+      setScanInput("");
+      processQRData(value);
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [scanInput, state, processQRData]);
 
   // Keep the scanner input focused whenever we're idle so a scan is captured
   // without the operator having to click first.
@@ -423,6 +438,18 @@ export default function ScanPage() {
       {/* Idle */}
       {state === "idle" && (
         <div className="space-y-4">
+          {/* Guide: how to present a QR / CCCD to the scanner */}
+          <Card>
+            <CardBody className="p-0 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt="Quy trình quét QR: mở mã QR hoặc thẻ căn cước → đưa vào máy quét → máy đang xử lý → hiển thị kết quả"
+                className="w-full h-auto"
+                src="/qr-scan-guide.jpeg"
+              />
+            </CardBody>
+          </Card>
+
           {/* Hardware barcode/QR scanner (keyboard wedge) — primary at the gate */}
           <Card className="border-2 border-primary-200">
             <CardBody className="space-y-3">
@@ -453,7 +480,7 @@ export default function ScanPage() {
               </form>
               <p className="text-xs text-default-400">
                 Đưa con trỏ vào ô trên và quét — máy quét sẽ tự nhập dữ liệu và
-                gửi Enter để xử lý.
+                xử lý ngay, không cần nhấn Enter.
               </p>
             </CardBody>
           </Card>
