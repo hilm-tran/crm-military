@@ -15,6 +15,7 @@ export interface Soldier {
   qrCode: string; // base64 PNG image
   qrSource: string;
   imageUrl: string | null;
+  presenceStatus?: "TRONG_DON_VI" | "NGOAI_DON_VI";
   vehicle?: VehicleResponse | null;
 }
 

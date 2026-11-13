@@ -22,6 +22,7 @@ type ScanState = "idle" | "scanning" | "processing" | "result";
 
 interface ScanResult {
   status: "DONG_Y" | "TU_CHOI" | "DANG_XU_LY";
+  direction?: "VAO" | "RA";
   reason?: string;
   type: string;
   name?: string;
@@ -186,6 +187,7 @@ export default function ScanPage() {
         setResult({
           status: res.status,
           reason: res.reason,
+          direction: res.direction,
           type: res.scanType ?? (isMilitary ? "MILITARY" : "CITIZEN"),
           name:
             res.militaryPersonnelFullName ??
@@ -355,7 +357,9 @@ export default function ScanPage() {
                   size="lg"
                   variant="flat"
                 >
-                  {STATUS_CONFIG[result.status]?.label ?? result.status}
+                  {result.direction === "VAO" && result.status === "DONG_Y"
+                    ? "Đồng ý vào cổng"
+                    : (STATUS_CONFIG[result.status]?.label ?? result.status)}
                 </Chip>
                 {result.name && (
                   <p className="mt-1 font-semibold text-lg">{result.name}</p>

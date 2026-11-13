@@ -27,6 +27,7 @@ export interface QRScanLog {
   scanType: "MILITARY" | "CITIZEN";
   scannedAt?: string;
   status: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
+  direction?: "VAO" | "RA";
   reason?: string;
   militaryPersonnelId?: number;
   militaryPersonnelCode?: string;
@@ -140,11 +141,12 @@ export const useQRScan = () => {
     async (params?: {
       scanType?: "MILITARY" | "CITIZEN";
       status?: "DANG_XU_LY" | "DONG_Y" | "TU_CHOI";
+      direction?: "VAO" | "RA";
       page?: number;
       size?: number;
     }) => {
       try {
-        const { scanType, status, page = 0, size = 20 } = params ?? {};
+        const { scanType, status, direction, page = 0, size = 20 } = params ?? {};
         const query = new URLSearchParams({
           page: page.toString(),
           size: size.toString(),
@@ -152,6 +154,7 @@ export const useQRScan = () => {
 
         if (scanType) query.set("scanType", scanType);
         if (status) query.set("status", status);
+        if (direction) query.set("direction", direction);
 
         return await apiClient.get<PaginatedResponse<QRScanLog>>(
           `/api/qr-scan-logs?${query.toString()}`,

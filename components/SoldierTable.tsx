@@ -3,6 +3,7 @@
 import {
   Button,
   Card,
+  Chip,
   Input,
   Modal,
   ModalBody,
@@ -39,6 +40,17 @@ const MANAGE_ROLES = [
   "ROLE_ADMIN_REGION",
   "ROLE_ADMIN_UNIT",
 ];
+
+const PresenceChip = ({ status }: { status?: Soldier["presenceStatus"] }) =>
+  status === "NGOAI_DON_VI" ? (
+    <Chip color="warning" size="sm" variant="flat">
+      Ngoài đơn vị
+    </Chip>
+  ) : (
+    <Chip color="success" size="sm" variant="flat">
+      Trong đơn vị
+    </Chip>
+  );
 
 const QRCodeCell = ({
   base64,
@@ -256,6 +268,7 @@ export const SoldierTable = () => {
             <TableColumn>ĐƠN VỊ</TableColumn>
             <TableColumn>CẤP BẬC</TableColumn>
             <TableColumn>CHỨC VỤ</TableColumn>
+            <TableColumn>HIỆN DIỆN</TableColumn>
             <TableColumn align="center">QR CODE</TableColumn>
             <TableColumn align="center">HÀNH ĐỘNG</TableColumn>
           </TableHeader>
@@ -282,6 +295,9 @@ export const SoldierTable = () => {
                   {item.positionCode
                     ? (positionMap[item.positionCode] ?? item.positionCode)
                     : "—"}
+                </TableCell>
+                <TableCell>
+                  <PresenceChip status={item.presenceStatus} />
                 </TableCell>
                 <TableCell>
                   <QRCodeCell
@@ -362,6 +378,9 @@ export const SoldierTable = () => {
                   <p className="text-xs text-default-400 font-mono">
                     {item.code}
                   </p>
+                  <div className="mt-1">
+                    <PresenceChip status={item.presenceStatus} />
+                  </div>
                 </div>
                 <QRCodeCell
                   base64={item.qrCode}

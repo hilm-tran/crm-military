@@ -44,6 +44,17 @@ const SCAN_TYPE_LABEL: Record<string, string> = {
   CITIZEN: "Người dân",
 };
 
+const DIRECTION_LABEL: Record<string, string> = {
+  VAO: "Vào",
+  RA: "Ra",
+};
+
+const DIRECTION_OPTIONS = [
+  { key: "", label: "Tất cả chiều" },
+  { key: "VAO", label: "Vào" },
+  { key: "RA", label: "Ra" },
+];
+
 const STATUS_OPTIONS = [
   { key: "", label: "Tất cả trạng thái" },
   { key: "DONG_Y", label: "Đồng ý" },
@@ -83,6 +94,7 @@ export default function HistoryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [scanType, setScanType] = useState("");
   const [status, setStatus] = useState("");
+  const [direction, setDirection] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -90,6 +102,7 @@ export default function HistoryPage() {
       const res = await getQRScanLogs({
         scanType: (scanType || undefined) as any,
         status: (status || undefined) as any,
+        direction: (direction || undefined) as any,
         page: page - 1,
         size: PAGE_SIZE,
       });
@@ -102,7 +115,7 @@ export default function HistoryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [getQRScanLogs, scanType, status, page]);
+  }, [getQRScanLogs, scanType, status, direction, page]);
 
   useEffect(() => {
     loadData();
@@ -110,7 +123,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [scanType, status]);
+  }, [scanType, status, direction]);
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -150,6 +163,20 @@ export default function HistoryPage() {
               <SelectItem key={o.key}>{o.label}</SelectItem>
             ))}
           </Select>
+          <Select
+            aria-label="Chiều"
+            className="w-full sm:w-36"
+            selectedKeys={new Set([direction])}
+            size="sm"
+            variant="bordered"
+            onSelectionChange={(keys) =>
+              setDirection((Array.from(keys)[0] as string) ?? "")
+            }
+          >
+            {DIRECTION_OPTIONS.map((o) => (
+              <SelectItem key={o.key}>{o.label}</SelectItem>
+            ))}
+          </Select>
         </div>
         <Button
           className="w-full sm:w-auto"
@@ -185,6 +212,7 @@ export default function HistoryPage() {
             <TableColumn>THỜI GIAN</TableColumn>
             <TableColumn>ĐỐI TƯỢNG</TableColumn>
             <TableColumn>LOẠI</TableColumn>
+            <TableColumn>CHIỀU</TableColumn>
             <TableColumn>TRẠNG THÁI</TableColumn>
             <TableColumn>LÝ DO</TableColumn>
           </TableHeader>
@@ -192,7 +220,7 @@ export default function HistoryPage() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((__, j) => (
+                  {Array.from({ length: 7 }).map((__, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full rounded" />
                     </TableCell>
@@ -203,7 +231,7 @@ export default function HistoryPage() {
               <TableRow>
                 <TableCell
                   className="text-center text-default-400 py-8"
-                  colSpan={6}
+                  colSpan={7}
                 >
                   Chưa có dữ liệu
                 </TableCell>
@@ -239,6 +267,11 @@ export default function HistoryPage() {
                   </TableCell>
                   <TableCell>
                     {SCAN_TYPE_LABEL[log.scanType] ?? log.scanType}
+                  </TableCell>
+                  <TableCell>
+                    {log.direction
+                      ? (DIRECTION_LABEL[log.direction] ?? log.direction)
+                      : "—"}
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -284,6 +317,8 @@ export default function HistoryPage() {
                     <p className="font-medium truncate">{subjectName(log)}</p>
                     <p className="text-xs text-default-400">
                       {SCAN_TYPE_LABEL[log.scanType] ?? log.scanType}
+                      {log.direction &&
+                        ` · ${DIRECTION_LABEL[log.direction] ?? log.direction}`}
                     </p>
                   </div>
                 </div>
